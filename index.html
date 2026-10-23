@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reach Artifact Portal</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+button{cursor:pointer;font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+
+.auth-container{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#7c3aed 0%,#a855f7 50%,#c084fc 100%);padding:20px;}
+.auth-card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 25px 80px rgba(0,0,0,0.25);}
+.auth-card h1{font-size:24px;text-align:center;color:#1e293b;margin-bottom:4px;}
+.auth-card .subtitle{text-align:center;color:#64748b;font-size:14px;margin-bottom:28px;}
+.auth-card .logo{text-align:center;font-size:48px;margin-bottom:12px;}
+.auth-tabs{display:flex;gap:4px;background:#f1f5f9;border-radius:10px;padding:4px;margin-bottom:24px;}
+.auth-tabs button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600;font-size:14px;background:transparent;color:#64748b;transition:all 0.2s;}
+.auth-tabs button.active{background:#7c3aed;color:#fff;}
+.auth-field{margin-bottom:16px;}
+.auth-field label{display:block;font-size:13px;font-weight:600;color:#64748b;margin-bottom:6px;}
+.auth-field input{width:100%;padding:12px 16px;border:2px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border 0.2s;}
+.auth-field input:focus{border-color:#7c3aed;}
+.auth-btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:700;font-size:15px;color:#fff;background:linear-gradient(135deg,#7c3aed,#a855f7);margin-top:8px;transition:opacity 0.2s;}
+.auth-btn:hover{opacity:0.9;}
+.auth-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.auth-error{background:#fef2f2;color:#ef4444;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;}
+.auth-loading{text-align:center;padding:40px;color:#64748b;}
+.auth-spinner{display:inline-block;width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.header{background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%);color:#fff;padding:20px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.header h1{font-size:22px;font-weight:700;}
+.header p{margin-top:4px;opacity:0.8;font-size:14px;}
+.user-info{display:flex;align-items:center;gap:12px;}
+.user-badge{background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;}
+.role-badge{background:rgba(255,255,255,0.3);padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.logout-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;transition:background 0.2s;}
+.logout-btn:hover{background:rgba(255,255,255,0.3);}
+
+.nav{display:flex;gap:4px;background:#fff;margin:0 20px;border-radius:0 0 12px 12px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,0.06);flex-wrap:wrap;}
+.nav button{padding:10px 20px;border:none;border-radius:8px;font-weight:600;font-size:14px;background:transparent;color:#64748b;transition:all 0.2s;}
+.nav button.active{background:#7c3aed;color:#fff;}
+
+.content{padding:20px 20px 30px;}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:16px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:none;border-radius:8px;font-weight:600;font-size:14px;color:#fff;background:#7c3aed;}
+.btn-green{background:#10b981;}
+.btn-amber{background:#f59e0b;}
+.btn-red{background:#ef4444;}
+.btn-sm{padding:5px 12px;font-size:12px;background:transparent;border:2px solid #e2e8f0;color:#64748b;border-radius:6px;}
+.btn-sm.red{color:#ef4444;border-color:#fecaca;}
+.btn-sm.edit{color:#7c3aed;border-color:#ddd6fe;}
+.input{width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;transition:border 0.2s;}
+.input:focus{border-color:#7c3aed;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:13px;font-weight:600;color:#64748b;margin-bottom:6px;}
+textarea.input{min-height:80px;resize:vertical;}
+.flex-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.grid{display:grid;gap:16px;}
+.grid-2{grid-template-columns:1fr 1fr;}
+.grid-3{grid-template-columns:1fr 1fr 1fr;}
+.empty{text-align:center;color:#94a3b8;padding:40px;font-size:14px;}
+
+.stat{border-left:4px solid;padding:18px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+.stat .label{font-size:13px;color:#64748b;font-weight:600;}
+.stat .value{font-size:28px;font-weight:700;margin-top:4px;}
+
+.dept-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-left:4px solid #7c3aed;cursor:pointer;transition:all 0.2s;}
+.dept-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1);transform:translateY(-2px);}
+.dept-card h3{font-size:16px;margin-bottom:6px;}
+.dept-card .dept-meta{font-size:13px;color:#64748b;}
+.dept-card .dept-count{font-size:24px;font-weight:700;color:#7c3aed;margin-top:8px;}
+
+.artifact-card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #e2e8f0;transition:all 0.2s;}
+.artifact-card:hover{border-color:#c4b5fd;}
+.artifact-card h4{font-size:15px;margin-bottom:6px;}
+.artifact-card .artifact-desc{font-size:13px;color:#64748b;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.artifact-card .artifact-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#94a3b8;flex-wrap:wrap;gap:6px;}
+.artifact-card .artifact-link{display:inline-flex;align-items:center;gap:4px;color:#7c3aed;font-size:13px;font-weight:600;text-decoration:none;margin-bottom:8px;}
+.artifact-card .artifact-link:hover{text-decoration:underline;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-purple{background:#f3e8ff;color:#7c3aed;}
+.badge-green{background:#dcfce7;color:#16a34a;}
+.badge-blue{background:#dbeafe;color:#2563eb;}
+.badge-amber{background:#fef3c7;color:#d97706;}
+.badge-red{background:#fee2e2;color:#dc2626;}
+.badge-gray{background:#f1f5f9;color:#64748b;}
+
+.search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.search-bar .input{flex:1;min-width:200px;}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:18px;margin-bottom:20px;}
+
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th{text-align:left;padding:10px 14px;font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;}
+td{padding:12px 14px;border-bottom:1px solid #f1f5f9;}
+tr:hover td{background:#f8fafc;}
+
+@media(max-width:768px){
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .header{padding:16px 20px;}
+  .content{padding:16px;}
+  .nav{margin:0 12px;}
+}
+
+.success-msg{background:#f0fdf4;color:#16a34a;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:12px;}
+.error-msg{background:#fef2f2;color:#ef4444;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:12px;}
+
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:8px;font-weight:600;font-size:14px;background:#f1f5f9;color:#64748b;margin-bottom:16px;transition:all 0.2s;}
+.back-btn:hover{background:#e2e8f0;}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+// =================== CONFIG ===================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBonSaA3vaynpLHUojOM4-kfqD1D0zkk3g",
+  authDomain: "office-grocery-tracker.firebaseapp.com",
+  projectId: "office-grocery-tracker",
+  storageBucket: "office-grocery-tracker.firebasestorage.app",
+  messagingSenderId: "402023883030",
+  appId: "1:402023883030:web:b1eec3c914564d06e0b037"
+};
+
+const ALLOWED_DOMAIN = "reachmobile.com";
+
+// Bootstrap admins — must match the list in the Firestore security rules
+const BOOTSTRAP_USERS = {
+  "harjot@reachmobile.com": { name: "Harjot", role: "ceo" },
+  "abhishek.agrawal@reachmobile.com": { name: "Abhishek", role: "admin" }
+};
+
+const DEFAULT_DEPARTMENTS = ["Finance", "HR", "Engineering", "Marketing", "Operations"];
+const ADMIN_ROLES = ["ceo", "founder", "admin"];
+
+const DEPT_COLORS = {
+  "Finance": "#7c3aed", "HR": "#10b981", "Engineering": "#2563eb", "Marketing": "#f59e0b",
+  "Operations": "#ef4444", "Sales": "#ec4899", "Legal": "#6366f1", "Product": "#14b8a6"
+};
+const DEPT_ICONS = {
+  "Finance": "💰", "HR": "👥", "Engineering": "⚙️", "Marketing": "📢",
+  "Operations": "🔧", "Sales": "📈", "Legal": "⚖️", "Product": "📦"
+};
+
+// Firestore collections (prefixed so they don't clash with the Grocery Tracker)
+const COL_ARTIFACTS = "ap_artifacts";
+const COL_USERS = "ap_users";
+const COL_CONFIG = "ap_config";
+
+// =================== STATE ===================
+let db = null;
+let currentUser = null;
+let currentTab = "dashboard";
+let currentDept = null;
+let artifacts = [];
+let users = [];
+let departments = DEFAULT_DEPARTMENTS.slice();
+let unsubs = [];
+let artifactUnsubs = [];
+let artifactsByDept = {};
+let artifactsKey = "";
+let renderTimer = null;
+
+// =================== HELPERS ===================
+function esc(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function jsArg(s){ return esc(JSON.stringify(String(s))); }
+function safeUrl(u){
+  u = (u || "").trim();
+  return /^https?:\/\//i.test(u) ? u : "";
+}
+function badgeClass(dept){
+  const colors = {"Finance":"purple","HR":"green","Engineering":"blue","Marketing":"amber","Operations":"red","Sales":"purple","Legal":"blue","Product":"green"};
+  return "badge badge-" + (colors[dept] || "gray");
+}
+function myEmail(){ return currentUser ? currentUser.email.toLowerCase() : ""; }
+
+function getCurrentUserProfile(){
+  if (!currentUser) return null;
+  return users.find(u => u.email === myEmail())
+    || { email: myEmail(), name: myEmail().split("@")[0], role: "viewer", departments: [] };
+}
+function isAdmin(){
+  const p = getCurrentUserProfile();
+  return !!p && ADMIN_ROLES.includes(p.role);
+}
+function hasAllDepts(){
+  const p = getCurrentUserProfile();
+  return isAdmin() || (!!p && (p.departments || []).includes("*"));
+}
+function canAccessDept(dept){
+  const p = getCurrentUserProfile();
+  if (!p) return false;
+  return hasAllDepts() || (p.departments || []).includes(dept);
+}
+function canEditDept(dept){
+  const p = getCurrentUserProfile();
+  if (!p) return false;
+  if (isAdmin()) return true;
+  return p.role === "member" && canAccessDept(dept);
+}
+function getDepartments(){ return departments; }
+function getAccessibleDepts(){ return getDepartments().filter(d => canAccessDept(d)); }
+function getDeptArtifacts(dept){
+  return artifacts.filter(a => a.department === dept).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+}
+function showError(msg){
+  console.error(msg);
+  const c = document.getElementById("mainContent");
+  if (c) {
+    const div = document.createElement("div");
+    div.className = "error-msg";
+    div.textContent = msg;
+    c.prepend(div);
+    setTimeout(() => div.remove(), 6000);
+  }
+}
+function scheduleRender(){
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => {
+    // Don't re-render underneath an open modal or while typing in a search box
+    if (document.getElementById("modalOverlay").style.display === "flex") return;
+    const ae = document.activeElement;
+    if (ae && (ae.id === "deptSearch" || ae.id === "allSearch")) return;
+    renderApp();
+  }, 50);
+}
+
+// =================== AUTH ===================
+function initFirebase(config){
+  firebase.initializeApp(config);
+  db = firebase.firestore();
+  document.getElementById("app").innerHTML = '<div class="auth-loading"><div class="auth-spinner"></div><p>Loading...</p></div>';
+  firebase.auth().onAuthStateChanged(async function(user){
+    stopListeners();
+    if (user) {
+      if (!user.email || !user.email.toLowerCase().endsWith("@" + ALLOWED_DOMAIN)) {
+        window._pendingAuthError = "Only @" + ALLOWED_DOMAIN + " accounts can use this portal.";
+        await firebase.auth().signOut();
+        return;
+      }
+      currentUser = user;
+      document.getElementById("app").innerHTML = '<div class="auth-loading"><div class="auth-spinner"></div><p>Loading your library...</p></div>';
+      try {
+        await ensureOwnProfile();
+        startListeners();
+      } catch (e) {
+        document.getElementById("app").innerHTML = '<div class="auth-loading"><p class="error-msg">Could not load the portal: ' + esc(e.message) + '</p><button class="btn" onclick="doLogout()">Sign Out</button></div>';
+      }
+    } else {
+      currentUser = null;
+      renderAuth();
+    }
+  });
+}
+
+async function ensureOwnProfile(){
+  const email = myEmail();
+  const ref = db.collection(COL_USERS).doc(email);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    const boot = BOOTSTRAP_USERS[email];
+    await ref.set({
+      email,
+      name: boot ? boot.name : email.split("@")[0],
+      role: boot ? boot.role : "viewer",
+      departments: boot ? ["*"] : [],
+      createdAt: new Date().toISOString()
+    });
+  }
+}
+
+function startListeners(){
+  unsubs.push(db.collection(COL_USERS).onSnapshot(snap => {
+    users = snap.docs.map(d => ({ email: d.id, ...d.data() }));
+    syncArtifactListeners();
+    scheduleRender();
+  }, e => showError("Team list: " + e.message)));
+
+  unsubs.push(db.collection(COL_CONFIG).doc("main").onSnapshot(snap => {
+    const d = snap.exists ? snap.data() : null;
+    departments = (d && Array.isArray(d.departments)) ? d.departments : DEFAULT_DEPARTMENTS.slice();
+    syncArtifactListeners();
+    scheduleRender();
+  }, e => showError("Departments: " + e.message)));
+}
+
+// Admins / "All departments" users read the whole collection.
+// Everyone else gets one listener per department they can see, so the
+// security rules can verify each query.
+function syncArtifactListeners(){
+  if (!users.length) return;
+  const key = hasAllDepts() ? "*" : getAccessibleDepts().slice().sort().join("|");
+  if (key === artifactsKey) return;
+  artifactsKey = key;
+  artifactUnsubs.forEach(u => u());
+  artifactUnsubs = [];
+  artifactsByDept = {};
+  artifacts = [];
+
+  const onErr = e => showError("Artifacts: " + e.message);
+  if (key === "*") {
+    artifactUnsubs.push(db.collection(COL_ARTIFACTS).onSnapshot(snap => {
+      artifacts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      scheduleRender();
+    }, onErr));
+  } else {
+    getAccessibleDepts().forEach(dept => {
+      artifactUnsubs.push(db.collection(COL_ARTIFACTS).where("department", "==", dept).onSnapshot(snap => {
+        artifactsByDept[dept] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        artifacts = Object.values(artifactsByDept).flat();
+        scheduleRender();
+      }, onErr));
+    });
+  }
+  scheduleRender();
+}
+
+function stopListeners(){
+  unsubs.forEach(u => u()); unsubs = [];
+  artifactUnsubs.forEach(u => u()); artifactUnsubs = [];
+  artifactsKey = ""; artifactsByDept = {};
+  artifacts = []; users = []; departments = DEFAULT_DEPARTMENTS.slice();
+}
+
+function renderAuth(){
+  let mode = "login";
+  function draw(){
+    document.getElementById("app").innerHTML = `
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="logo">📚</div>
+          <h1>Reach Artifact Portal</h1>
+          <p class="subtitle">Centralized knowledge & documents</p>
+          <div class="auth-tabs">
+            <button class="${mode==="login"?"active":""}" onclick="window._authMode='login';window._drawAuth()">Sign In</button>
+            <button class="${mode==="signup"?"active":""}" onclick="window._authMode='signup';window._drawAuth()">Sign Up</button>
+          </div>
+          <div class="auth-error" id="authError"></div>
+          <div class="auth-field"><label>Email</label><input type="email" id="authEmail" placeholder="you@reachmobile.com"></div>
+          <div class="auth-field"><label>Password</label><input type="password" id="authPass" placeholder="${mode==="login"?"Enter password":"Create password (min 6 chars)"}"></div>
+          ${mode==="login"
+            ? `<button class="auth-btn" onclick="doLogin()">Sign In</button>
+               <p style="text-align:center;margin-top:14px;font-size:13px"><a href="#" style="color:#7c3aed" onclick="doReset();return false;">Forgot password?</a></p>`
+            : `<button class="auth-btn" onclick="doSignup()">Create Account</button>`}
+        </div>
+      </div>
+    `;
+  }
+  window._authMode = mode;
+  window._drawAuth = function(){ mode = window._authMode; draw(); };
+  draw();
+  if (window._pendingAuthError) { showAuthError(window._pendingAuthError); window._pendingAuthError = null; }
+}
+
+function showAuthError(msg, ok){
+  const el = document.getElementById("authError");
+  if (el) {
+    el.style.display = "block";
+    el.style.background = ok ? "#f0fdf4" : "#fef2f2";
+    el.style.color = ok ? "#16a34a" : "#ef4444";
+    el.textContent = msg;
+  }
+}
+
+function readAuthFields(){
+  return {
+    email: document.getElementById("authEmail").value.trim().toLowerCase(),
+    pass: document.getElementById("authPass").value
+  };
+}
+
+function doLogin(){
+  const { email, pass } = readAuthFields();
+  if (!email || !pass) { showAuthError("Please enter email and password."); return; }
+  firebase.auth().signInWithEmailAndPassword(email, pass).catch(e => showAuthError(e.message));
+}
+
+function doSignup(){
+  const { email, pass } = readAuthFields();
+  if (!email || !pass) { showAuthError("Please enter email and password."); return; }
+  if (!email.endsWith("@" + ALLOWED_DOMAIN)) { showAuthError("Please use your @" + ALLOWED_DOMAIN + " email."); return; }
+  firebase.auth().createUserWithEmailAndPassword(email, pass).catch(e => showAuthError(e.message));
+}
+
+function doReset(){
+  const { email } = readAuthFields();
+  if (!email) { showAuthError("Enter your email above, then click Forgot password."); return; }
+  firebase.auth().sendPasswordResetEmail(email)
+    .then(() => showAuthError("Password reset email sent to " + email + ".", true))
+    .catch(e => showAuthError(e.message));
+}
+
+function doLogout(){ firebase.auth().signOut(); }
+
+// =================== RENDER ===================
+function renderApp(){
+  if (!currentUser) return;
+  const profile = getCurrentUserProfile();
+  const admin = isAdmin();
+  if (currentTab === "admin" && !admin) currentTab = "dashboard";
+  document.getElementById("app").innerHTML = `
+    <div class="header">
+      <div>
+        <h1>📚 Reach Artifact Portal</h1>
+        <p>Centralized knowledge & documents</p>
+      </div>
+      <div class="user-info">
+        <span class="role-badge">${esc(profile.role)}</span>
+        <span class="user-badge">${esc(profile.name || profile.email)}</span>
+        <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      </div>
+    </div>
+    <div class="nav" id="navBar">
+      <button class="${currentTab==="dashboard"?"active":""}" onclick="switchTab('dashboard')">Dashboard</button>
+      <button class="${currentTab==="departments"?"active":""}" onclick="switchTab('departments')">Departments</button>
+      <button class="${currentTab==="all"?"active":""}" onclick="switchTab('all')">All Artifacts</button>
+      ${admin?`<button class="${currentTab==="admin"?"active":""}" onclick="switchTab('admin')">Admin</button>`:""}
+    </div>
+    <div class="content" id="mainContent"></div>
+  `;
+  renderContent();
+}
+
+function switchTab(tab){
+  currentTab = tab;
+  currentDept = null;
+  renderApp();
+}
+
+function renderContent(){
+  const c = document.getElementById("mainContent");
+  if (!c) return;
+  if (currentTab === "dashboard") c.innerHTML = renderDashboard();
+  else if (currentTab === "departments") c.innerHTML = currentDept ? renderDeptView(currentDept) : renderDepartments();
+  else if (currentTab === "all") c.innerHTML = renderAllArtifacts();
+  else if (currentTab === "admin") c.innerHTML = renderAdmin();
+}
+
+// =================== DASHBOARD ===================
+function renderDashboard(){
+  const depts = getAccessibleDepts();
+  const visible = artifacts.filter(a => canAccessDept(a.department));
+  const recent = visible.slice().sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||"")).slice(0, 5);
+  const profile = getCurrentUserProfile();
+  const pendingNote = (!isAdmin() && depts.length === 0)
+    ? `<div class="card" style="border-left:4px solid #f59e0b"><strong>Welcome!</strong> Your account is set up. An admin needs to give you access to a department before you'll see any artifacts.</div>`
+    : "";
+
+  return `
+    ${pendingNote}
+    <div class="grid grid-3" style="margin-bottom:20px">
+      <div class="stat" style="border-color:#7c3aed">
+        <div class="label">Departments</div>
+        <div class="value" style="color:#7c3aed">${depts.length}</div>
+      </div>
+      <div class="stat" style="border-color:#10b981">
+        <div class="label">Total Artifacts</div>
+        <div class="value" style="color:#10b981">${visible.length}</div>
+      </div>
+      <div class="stat" style="border-color:#f59e0b">
+        <div class="label">Team Members</div>
+        <div class="value" style="color:#f59e0b">${users.length}</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3 style="font-size:16px;margin-bottom:16px">📁 Departments Overview</h3>
+        ${depts.length > 0 ? depts.map(d => {
+          const count = getDeptArtifacts(d).length;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="openDept(${jsArg(d)})">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">${DEPT_ICONS[d]||"📂"}</span>
+              <span style="font-weight:600">${esc(d)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:13px;color:#64748b">${count} artifact${count!==1?"s":""}</span>
+              <span style="color:#c4b5fd">›</span>
+            </div>
+          </div>`;
+        }).join("") : '<p class="empty">No departments accessible</p>'}
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:16px;margin-bottom:16px">🕒 Recent Artifacts</h3>
+        ${recent.length > 0 ? recent.map(a => `
+          <div style="padding:10px 0;border-bottom:1px solid #f1f5f9">
+            <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
+              <div>
+                <div style="font-weight:600;font-size:14px">${esc(a.title)}</div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:2px">${esc(a.owner)} • ${esc((a.createdAt||"").slice(0,10))}</div>
+              </div>
+              <span class="${badgeClass(a.department)}">${esc(a.department)}</span>
+            </div>
+          </div>
+        `).join("") : '<p class="empty">No artifacts yet</p>'}
+      </div>
+    </div>
+  `;
+}
+
+// =================== DEPARTMENTS ===================
+function renderDepartments(){
+  const depts = getAccessibleDepts();
+  if (!depts.length) return '<p class="empty">You don\'t have access to any departments yet. Ask an admin to add you.</p>';
+  return `
+    <h2 style="font-size:18px;margin-bottom:16px">🏢 Your Departments</h2>
+    <div class="grid grid-3">
+      ${depts.map(d => {
+        const count = getDeptArtifacts(d).length;
+        const color = DEPT_COLORS[d] || "#64748b";
+        const icon = DEPT_ICONS[d] || "📂";
+        return `
+          <div class="dept-card" style="border-color:${color}" onclick="openDept(${jsArg(d)})">
+            <div style="font-size:28px;margin-bottom:8px">${icon}</div>
+            <h3>${esc(d)}</h3>
+            <div class="dept-meta">${canEditDept(d)?"You can add & edit":"View only"}</div>
+            <div class="dept-count" style="color:${color}">${count}</div>
+            <div style="font-size:12px;color:#94a3b8">artifact${count!==1?"s":""}</div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function openDept(dept){
+  currentDept = dept;
+  currentTab = "departments";
+  renderApp();
+}
+
+function renderDeptView(dept){
+  if (!canAccessDept(dept)) { currentDept = null; return renderDepartments(); }
+  const arts = getDeptArtifacts(dept);
+  const canEdit = canEditDept(dept);
+  const color = DEPT_COLORS[dept] || "#64748b";
+  const icon = DEPT_ICONS[dept] || "📂";
+
+  return `
+    <button class="back-btn" onclick="currentDept=null;renderApp()">← Back to Departments</button>
+    <div class="card" style="border-left:4px solid ${color}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 style="font-size:20px">${icon} ${esc(dept)}</h2>
+          <p style="font-size:13px;color:#64748b;margin-top:4px">${arts.length} artifact${arts.length!==1?"s":""}</p>
+        </div>
+        ${canEdit?`<button class="btn" onclick="openAddArtifact(${jsArg(dept)})">+ Add Artifact</button>`:""}
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input class="input" placeholder="Search artifacts..." id="deptSearch" oninput="filterDeptArtifacts()">
+    </div>
+
+    <div id="deptArtifactsList">
+      ${arts.length > 0 ? `<div class="grid grid-2">${arts.map(a => renderArtifactCard(a)).join("")}</div>` : `<p class="empty">No artifacts in this department yet.${canEdit?' Click "+ Add Artifact" to create one.':''}</p>`}
+    </div>
+  `;
+}
+
+function renderArtifactCard(a){
+  const isOwner = a.ownerEmail === myEmail();
+  const showActions = isAdmin() || (isOwner && canEditDept(a.department));
+  const link = safeUrl(a.link);
+
+  return `
+    <div class="artifact-card">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
+        <span class="${badgeClass(a.department)}">${esc(a.department)}</span>
+        <span style="font-size:11px;color:#94a3b8">${esc((a.createdAt||"").slice(0,10))}</span>
+      </div>
+      <h4>${esc(a.title)}</h4>
+      <p class="artifact-desc">${esc(a.description) || "—"}</p>
+      ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="artifact-link">🔗 Open Artifact ↗</a>` : ""}
+      <div class="artifact-meta">
+        <span>👤 ${esc(a.owner)}</span>
+        ${showActions ? `
+          <div class="flex-row">
+            <button class="btn-sm edit" onclick="openEditArtifact(${jsArg(a.id)})">Edit</button>
+            <button class="btn-sm red" onclick="deleteArtifact(${jsArg(a.id)})">Delete</button>
+          </div>
+        ` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function matchesQuery(a, q){
+  return (a.title||"").toLowerCase().includes(q) || (a.description||"").toLowerCase().includes(q) || (a.owner||"").toLowerCase().includes(q);
+}
+
+function filterDeptArtifacts(){
+  const q = (document.getElementById("deptSearch")?.value || "").toLowerCase();
+  let arts = getDeptArtifacts(currentDept);
+  if (q) arts = arts.filter(a => matchesQuery(a, q));
+  const el = document.getElementById("deptArtifactsList");
+  if (el) el.innerHTML = arts.length > 0 ? `<div class="grid grid-2">${arts.map(a => renderArtifactCard(a)).join("")}</div>` : '<p class="empty">No matching artifacts</p>';
+}
+
+// =================== ALL ARTIFACTS ===================
+function renderAllArtifacts(){
+  const arts = artifacts.filter(a => canAccessDept(a.department)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+  return `
+    <h2 style="font-size:18px;margin-bottom:16px">📋 All Artifacts</h2>
+    <div class="search-bar">
+      <input class="input" placeholder="Search by title, owner, description..." id="allSearch" oninput="filterAllArtifacts()">
+      <select class="input" style="width:200px" id="allDeptFilter" onchange="filterAllArtifacts()">
+        <option value="">All Departments</option>
+        ${getAccessibleDepts().map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join("")}
+      </select>
+    </div>
+    <div id="allArtifactsList">
+      ${renderArtifactList(arts)}
+    </div>
+  `;
+}
+
+function renderArtifactList(arts){
+  if (arts.length === 0) return '<p class="empty">No artifacts found</p>';
+  return `<div class="grid grid-2">${arts.map(a => renderArtifactCard(a)).join("")}</div>`;
+}
+
+function filterAllArtifacts(){
+  const q = (document.getElementById("allSearch")?.value || "").toLowerCase();
+  const dept = document.getElementById("allDeptFilter")?.value || "";
+  let arts = artifacts.filter(a => canAccessDept(a.department)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+  if (dept) arts = arts.filter(a => a.department === dept);
+  if (q) arts = arts.filter(a => matchesQuery(a, q));
+  const el = document.getElementById("allArtifactsList");
+  if (el) el.innerHTML = renderArtifactList(arts);
+}
+
+// =================== ARTIFACT CRUD ===================
+function modalError(msg){
+  let el = document.getElementById("modalError");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "modalError";
+    el.className = "error-msg";
+    const body = document.getElementById("modalBody");
+    body.insertBefore(el, body.children[1] || null);
+  }
+  el.textContent = msg;
+}
+
+function openModal(html){
+  document.getElementById("modalBody").innerHTML = html;
+  document.getElementById("modalOverlay").style.display = "flex";
+}
+
+function closeModal(){
+  document.getElementById("modalOverlay").style.display = "none";
+  scheduleRender();
+}
+
+function openAddArtifact(dept){
+  const profile = getCurrentUserProfile();
+  openModal(`
+    <h3>Add Artifact to ${esc(dept)}</h3>
+    <div class="field"><label>Title *</label><input class="input" id="artTitle" placeholder="e.g. Q4 Budget Report"></div>
+    <div class="field"><label>Description</label><textarea class="input" id="artDesc" placeholder="Brief description of this artifact..."></textarea></div>
+    <div class="field"><label>Link (URL)</label><input class="input" id="artLink" placeholder="https://claude.ai/... or https://docs.google.com/..."></div>
+    <div class="field"><label>Owner</label><input class="input" id="artOwner" value="${esc(profile.name || currentUser.email)}"></div>
+    <button class="btn" id="artSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="addArtifact(${jsArg(dept)})">Add Artifact</button>
+  `);
+}
+
+async function addArtifact(dept){
+  const title = document.getElementById("artTitle").value.trim();
+  const description = document.getElementById("artDesc").value.trim();
+  const rawLink = document.getElementById("artLink").value.trim();
+  const owner = document.getElementById("artOwner").value.trim();
+  if (!title) { modalError("Please enter a title."); return; }
+  if (rawLink && !safeUrl(rawLink)) { modalError("Link must start with http:// or https://"); return; }
+  const btn = document.getElementById("artSaveBtn"); btn.disabled = true;
+  const now = new Date().toISOString();
+  try {
+    await db.collection(COL_ARTIFACTS).add({
+      title, description, link: rawLink,
+      owner: owner || myEmail(),
+      ownerEmail: myEmail(),
+      department: dept,
+      createdAt: now, updatedAt: now
+    });
+    closeModal();
+  } catch (e) { btn.disabled = false; modalError("Could not save: " + e.message); }
+}
+
+function openEditArtifact(id){
+  const a = artifacts.find(x => x.id === id);
+  if (!a) return;
+  const deptOptions = isAdmin() ? getDepartments() : getDepartments().filter(d => canEditDept(d));
+  openModal(`
+    <h3>Edit Artifact</h3>
+    <div class="field"><label>Title *</label><input class="input" id="editTitle" value="${esc(a.title)}"></div>
+    <div class="field"><label>Description</label><textarea class="input" id="editDesc">${esc(a.description)}</textarea></div>
+    <div class="field"><label>Link (URL)</label><input class="input" id="editLink" value="${esc(a.link)}"></div>
+    <div class="field"><label>Owner</label><input class="input" id="editOwner" value="${esc(a.owner)}"></div>
+    <div class="field"><label>Department</label>
+      <select class="input" id="editDept">${deptOptions.map(d=>`<option value="${esc(d)}" ${d===a.department?"selected":""}>${esc(d)}</option>`).join("")}</select>
+    </div>
+    <button class="btn" id="editSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="saveEditArtifact(${jsArg(id)})">Save Changes</button>
+  `);
+}
+
+async function saveEditArtifact(id){
+  const title = document.getElementById("editTitle").value.trim();
+  const link = document.getElementById("editLink").value.trim();
+  if (!title) { modalError("Please enter a title."); return; }
+  if (link && !safeUrl(link)) { modalError("Link must start with http:// or https://"); return; }
+  const btn = document.getElementById("editSaveBtn"); btn.disabled = true;
+  try {
+    await db.collection(COL_ARTIFACTS).doc(id).update({
+      title,
+      description: document.getElementById("editDesc").value.trim(),
+      link,
+      owner: document.getElementById("editOwner").value.trim(),
+      department: document.getElementById("editDept").value,
+      updatedAt: new Date().toISOString()
+    });
+    closeModal();
+  } catch (e) { btn.disabled = false; modalError("Could not save: " + e.message); }
+}
+
+async function deleteArtifact(id){
+  const a = artifacts.find(x => x.id === id);
+  if (!confirm(`Delete "${a ? a.title : "this artifact"}"? This can't be undone.`)) return;
+  try { await db.collection(COL_ARTIFACTS).doc(id).delete(); }
+  catch (e) { showError("Could not delete: " + e.message); }
+}
+
+// =================== ADMIN ===================
+function renderAdmin(){
+  if (!isAdmin()) return '<p class="empty">Access denied</p>';
+  const depts = getDepartments();
+  const sorted = users.slice().sort((a,b) => (a.name||a.email).localeCompare(b.name||b.email));
+  return `
+    <h2 style="font-size:18px;margin-bottom:16px">⚙️ Admin Panel</h2>
+    <div class="grid grid-2">
+      <div class="card" style="overflow-x:auto">
+        <h3 style="font-size:16px;margin-bottom:6px">👥 Team Members & Access</h3>
+        <p style="font-size:12px;color:#94a3b8;margin-bottom:14px">People appear here after they sign up. Viewers can only read; Members can add to their departments.</p>
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Departments</th><th></th></tr></thead>
+          <tbody>
+            ${sorted.map(u => `
+              <tr>
+                <td style="font-weight:600">${esc(u.name)}</td>
+                <td style="font-size:12px;color:#64748b">${esc(u.email)}</td>
+                <td><span class="badge badge-${ADMIN_ROLES.includes(u.role)?'purple':u.role==='member'?'blue':'gray'}">${esc(u.role)}</span></td>
+                <td style="font-size:12px">${(u.departments||[]).includes("*")?"All":esc((u.departments||[]).join(", "))||"None"}</td>
+                <td><button class="btn-sm edit" onclick="openEditUser(${jsArg(u.email)})">Edit</button></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:16px;margin-bottom:16px">🏢 Departments</h3>
+        ${depts.map(d => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:18px">${DEPT_ICONS[d]||"📂"}</span>
+              <span style="font-weight:600">${esc(d)}</span>
+              <span style="font-size:12px;color:#94a3b8">(${getDeptArtifacts(d).length} artifacts)</span>
+            </div>
+            <button class="btn-sm red" onclick="removeDept(${jsArg(d)})">Remove</button>
+          </div>
+        `).join("")}
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <input class="input" id="newDeptName" placeholder="New department name" style="flex:1">
+          <button class="btn" onclick="addDept()">Add</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleAllDepts(cb){
+  document.querySelectorAll('.deptCb').forEach(c => { c.checked = cb.checked; c.disabled = cb.checked; });
+}
+
+function openEditUser(email){
+  const u = users.find(x => x.email === email);
+  if (!u) return;
+  const depts = getDepartments();
+  const hasAll = (u.departments||[]).includes("*");
+  const roles = [["viewer","Viewer (read only)"],["member","Member (can add artifacts)"],["admin","Admin (full access)"],["founder","Founder (full access)"],["ceo","CEO (full access)"]];
+  openModal(`
+    <h3>Edit Member: ${esc(u.name)}</h3>
+    <div class="field"><label>Name</label><input class="input" id="editUserName" value="${esc(u.name)}"></div>
+    <div class="field"><label>Email</label><input class="input" value="${esc(u.email)}" disabled style="background:#f1f5f9"></div>
+    <div class="field"><label>Role</label>
+      <select class="input" id="editUserRole">
+        ${roles.map(([v,l]) => `<option value="${v}" ${u.role===v?"selected":""}>${l}</option>`).join("")}
+      </select>
+    </div>
+    <div class="field"><label>Department Access</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="allDeptsCb" ${hasAll?"checked":""} onchange="toggleAllDepts(this)"> All</label>
+        ${depts.map(d => `<label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="${esc(d)}" class="deptCb" ${hasAll||(u.departments||[]).includes(d)?"checked":""} ${hasAll?"disabled":""}> ${esc(d)}</label>`).join("")}
+      </div>
+    </div>
+    <button class="btn" id="userSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="saveEditUser(${jsArg(email)})">Save Changes</button>
+  `);
+}
+
+async function saveEditUser(email){
+  const role = document.getElementById("editUserRole").value;
+  if (email === myEmail() && !ADMIN_ROLES.includes(role)) {
+    modalError("You can't remove your own admin access. Ask another admin to do it.");
+    return;
+  }
+  let depts = [];
+  if (document.getElementById("allDeptsCb").checked) depts = ["*"];
+  else document.querySelectorAll('.deptCb:checked').forEach(c => depts.push(c.value));
+  const btn = document.getElementById("userSaveBtn"); btn.disabled = true;
+  try {
+    await db.collection(COL_USERS).doc(email).update({
+      name: document.getElementById("editUserName").value.trim() || email.split("@")[0],
+      role,
+      departments: depts
+    });
+    closeModal();
+  } catch (e) { btn.disabled = false; modalError("Could not save: " + e.message); }
+}
+
+async function saveDepartmentsList(list){
+  try { await db.collection(COL_CONFIG).doc("main").set({ departments: list }, { merge: true }); }
+  catch (e) { showError("Could not update departments: " + e.message); }
+}
+
+function addDept(){
+  const name = (document.getElementById("newDeptName")?.value || "").trim();
+  if (!name) return;
+  if (getDepartments().includes(name)) { showError("Department already exists."); return; }
+  saveDepartmentsList(getDepartments().concat([name]));
+}
+
+function removeDept(name){
+  const n = getDeptArtifacts(name).length;
+  if (!confirm(`Remove department "${name}"?${n ? ` Its ${n} artifact(s) stay in the database but won't be shown.` : ""}`)) return;
+  saveDepartmentsList(getDepartments().filter(d => d !== name));
+}
+
+// =================== STARTUP ===================
+initFirebase(FIREBASE_CONFIG);
+</script>
+</body>
+</html>
