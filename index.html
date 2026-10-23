@@ -141,7 +141,9 @@ const FIREBASE_CONFIG = {
   appId: "1:402023883030:web:b1eec3c914564d06e0b037"
 };
 
-const ALLOWED_DOMAIN = "reachmobile.com";
+const ALLOWED_DOMAINS = ["reachmobile.com", "reachplatform.com"];
+function isAllowedEmail(e){ e = (e || "").toLowerCase(); return ALLOWED_DOMAINS.some(d => e.endsWith("@" + d)); }
+const DOMAINS_LABEL = ALLOWED_DOMAINS.map(d => "@" + d).join(" or ");
 
 // Bootstrap admins — must match the list in the Firestore security rules
 const BOOTSTRAP_USERS = {
@@ -256,8 +258,8 @@ function initFirebase(config){
   firebase.auth().onAuthStateChanged(async function(user){
     stopListeners();
     if (user) {
-      if (!user.email || !user.email.toLowerCase().endsWith("@" + ALLOWED_DOMAIN)) {
-        window._pendingAuthError = "Only @" + ALLOWED_DOMAIN + " accounts can use this portal.";
+      if (!isAllowedEmail(user.email)) {
+        window._pendingAuthError = "Only " + DOMAINS_LABEL + " accounts can use this portal.";
         await firebase.auth().signOut();
         return;
       }
@@ -401,7 +403,7 @@ function doLogin(){
 function doSignup(){
   const { email, pass } = readAuthFields();
   if (!email || !pass) { showAuthError("Please enter email and password."); return; }
-  if (!email.endsWith("@" + ALLOWED_DOMAIN)) { showAuthError("Please use your @" + ALLOWED_DOMAIN + " email."); return; }
+  if (!isAllowedEmail(email)) { showAuthError("Please use your " + DOMAINS_LABEL + " email."); return; }
   firebase.auth().createUserWithEmailAndPassword(email, pass).catch(e => showAuthError(e.message));
 }
 
