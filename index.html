@@ -4,116 +4,152 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reach Artifact Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+:root{
+  --coral:#F05665; --purple:#A0189D; --ink:#0F172A; --bg:#F8F9FF; --muted:#475569; --gray:#64748B;
+  --border:#E2E8F0; --white:#FFFFFF; --coral-light:#FEF2F2;
+  --grad:linear-gradient(135deg,#F05665,#A0189D);
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;}
-::-webkit-scrollbar{width:6px;}
-::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px;}
 button{cursor:pointer;font-family:inherit;}
 input,select,textarea{font-family:inherit;}
+a{color:var(--coral);}
+.brand-logo{display:block;height:28px;width:auto;}
+.logo-chip{background:var(--white);border-radius:10px;padding:8px 12px;display:inline-flex;align-items:center;}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--coral);margin-bottom:6px;}
+.section-title{font-size:26px;font-weight:700;letter-spacing:-0.5px;line-height:1.2;}
+.section-head{margin-bottom:22px;}
+.section-head .rule{width:48px;height:4px;border-radius:2px;background:var(--grad);margin-top:12px;}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
 
-.auth-container{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#7c3aed 0%,#a855f7 50%,#c084fc 100%);padding:20px;}
-.auth-card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 25px 80px rgba(0,0,0,0.25);}
-.auth-card h1{font-size:24px;text-align:center;color:#1e293b;margin-bottom:4px;}
-.auth-card .subtitle{text-align:center;color:#64748b;font-size:14px;margin-bottom:28px;}
-.auth-card .logo{text-align:center;font-size:48px;margin-bottom:12px;}
-.auth-tabs{display:flex;gap:4px;background:#f1f5f9;border-radius:10px;padding:4px;margin-bottom:24px;}
-.auth-tabs button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600;font-size:14px;background:transparent;color:#64748b;transition:all 0.2s;}
-.auth-tabs button.active{background:#7c3aed;color:#fff;}
+.auth-container{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr;background:var(--ink);}
+.auth-hero{padding:56px;display:flex;flex-direction:column;justify-content:space-between;gap:28px;color:var(--white);}
+.auth-hero h1{font-size:46px;font-weight:800;line-height:1.1;letter-spacing:-1px;margin:18px 0 18px;max-width:520px;}
+.auth-hero p{color:#CBD5E1;font-size:16px;max-width:440px;}
+.auth-hero .fine{font-size:12px;color:#64748B;}
+.auth-side{display:flex;align-items:center;justify-content:center;padding:32px;background:var(--bg);}
+.auth-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:36px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(15,23,42,0.08);}
+.auth-card h2{font-size:22px;font-weight:700;margin-bottom:4px;}
+.auth-card .subtitle{color:var(--gray);font-size:14px;margin-bottom:24px;}
+.auth-tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:4px;margin-bottom:22px;}
+.auth-tabs button{flex:1;padding:9px;border:none;border-radius:999px;font-weight:600;font-size:14px;background:transparent;color:var(--gray);transition:all 0.2s;}
+.auth-tabs button.active{background:var(--ink);color:var(--white);}
 .auth-field{margin-bottom:16px;}
-.auth-field label{display:block;font-size:13px;font-weight:600;color:#64748b;margin-bottom:6px;}
-.auth-field input{width:100%;padding:12px 16px;border:2px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border 0.2s;}
-.auth-field input:focus{border-color:#7c3aed;}
-.auth-btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:700;font-size:15px;color:#fff;background:linear-gradient(135deg,#7c3aed,#a855f7);margin-top:8px;transition:opacity 0.2s;}
-.auth-btn:hover{opacity:0.9;}
+.auth-field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+.auth-field input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:border 0.2s,box-shadow 0.2s;}
+.auth-field input:focus{border-color:var(--coral);box-shadow:0 0 0 3px rgba(240,86,101,0.12);}
+.auth-btn{width:100%;padding:13px;border:none;border-radius:999px;font-weight:600;font-size:15px;color:var(--white);background:var(--grad);margin-top:6px;transition:opacity 0.2s,transform 0.2s;}
+.auth-btn:hover{opacity:0.92;}
 .auth-btn:disabled{opacity:0.5;cursor:not-allowed;}
-.auth-error{background:#fef2f2;color:#ef4444;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;}
-.auth-loading{text-align:center;padding:40px;color:#64748b;}
-.auth-spinner{display:inline-block;width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;}
+.auth-error{background:var(--coral-light);color:#B91C1C;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
+.auth-loading{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--gray);text-align:center;padding:40px;}
+.auth-spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--coral);border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.header{background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%);color:#fff;padding:20px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
-.header h1{font-size:22px;font-weight:700;}
-.header p{margin-top:4px;opacity:0.8;font-size:14px;}
-.user-info{display:flex;align-items:center;gap:12px;}
-.user-badge{background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;}
-.role-badge{background:rgba(255,255,255,0.3);padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
-.logout-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;transition:background 0.2s;}
-.logout-btn:hover{background:rgba(255,255,255,0.3);}
+.topbar{background:var(--ink);color:var(--white);}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:14px;}
+.brand-name{font-size:16px;font-weight:700;letter-spacing:-0.2px;}
+.brand-name span{display:block;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#94A3B8;}
+.user-info{display:flex;align-items:center;gap:10px;}
+.user-badge{font-size:13px;font-weight:500;color:#E2E8F0;}
+.role-badge{background:var(--grad);padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--white);}
+.logout-btn{background:transparent;border:1px solid rgba(255,255,255,0.25);color:var(--white);padding:7px 16px;border-radius:999px;font-size:13px;font-weight:600;transition:background 0.2s;}
+.logout-btn:hover{background:rgba(255,255,255,0.1);}
+.nav-wrap{background:var(--ink);border-top:1px solid rgba(255,255,255,0.08);}
+.nav{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;gap:6px;overflow-x:auto;}
+.nav button{padding:14px 4px;margin-right:22px;border:none;border-bottom:3px solid transparent;font-weight:600;font-size:14px;background:transparent;color:#94A3B8;white-space:nowrap;transition:color 0.2s;}
+.nav button:hover{color:var(--white);}
+.nav button.active{color:var(--white);border-image:var(--grad) 1;border-bottom:3px solid;}
 
-.nav{display:flex;gap:4px;background:#fff;margin:0 20px;border-radius:0 0 12px 12px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,0.06);flex-wrap:wrap;}
-.nav button{padding:10px 20px;border:none;border-radius:8px;font-weight:600;font-size:14px;background:transparent;color:#64748b;transition:all 0.2s;}
-.nav button.active{background:#7c3aed;color:#fff;}
-
-.content{padding:20px 20px 30px;}
-.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:16px;}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:none;border-radius:8px;font-weight:600;font-size:14px;color:#fff;background:#7c3aed;}
-.btn-green{background:#10b981;}
-.btn-amber{background:#f59e0b;}
-.btn-red{background:#ef4444;}
-.btn-sm{padding:5px 12px;font-size:12px;background:transparent;border:2px solid #e2e8f0;color:#64748b;border-radius:6px;}
-.btn-sm.red{color:#ef4444;border-color:#fecaca;}
-.btn-sm.edit{color:#7c3aed;border-color:#ddd6fe;}
-.input{width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;transition:border 0.2s;}
-.input:focus{border-color:#7c3aed;}
+.content{max-width:1200px;margin:0 auto;padding:32px 24px 48px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px;}
+.card-title{font-size:16px;font-weight:700;margin-bottom:14px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 22px;border:none;border-radius:999px;font-weight:600;font-size:14px;color:var(--white);background:var(--grad);transition:opacity 0.2s;}
+.btn:hover{opacity:0.92;}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-sm{padding:5px 14px;font-size:12px;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:999px;}
+.btn-sm.red{color:#DC2626;border-color:#FECACA;}
+.btn-sm.edit{color:var(--ink);}
+.btn-sm:hover{background:var(--bg);}
+.input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;background:var(--white);transition:border 0.2s,box-shadow 0.2s;}
+.input:focus{border-color:var(--coral);box-shadow:0 0 0 3px rgba(240,86,101,0.12);}
 .field{margin-bottom:14px;}
-.field label{display:block;font-size:13px;font-weight:600;color:#64748b;margin-bottom:6px;}
-textarea.input{min-height:80px;resize:vertical;}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+textarea.input{min-height:90px;resize:vertical;}
 .flex-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .grid{display:grid;gap:16px;}
 .grid-2{grid-template-columns:1fr 1fr;}
-.grid-3{grid-template-columns:1fr 1fr 1fr;}
-.empty{text-align:center;color:#94a3b8;padding:40px;font-size:14px;}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.empty{text-align:center;color:var(--gray);padding:36px 20px;font-size:14px;}
 
-.stat{border-left:4px solid;padding:18px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
-.stat .label{font-size:13px;color:#64748b;font-weight:600;}
-.stat .value{font-size:28px;font-weight:700;margin-top:4px;}
+.stat{padding:20px 22px;background:var(--white);border:1px solid var(--border);border-radius:14px;position:relative;overflow:hidden;}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad);}
+.stat .label{font-size:11px;color:var(--gray);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
+.stat .value{font-size:34px;font-weight:800;margin-top:2px;letter-spacing:-1px;color:var(--ink);}
 
-.dept-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-left:4px solid #7c3aed;cursor:pointer;transition:all 0.2s;}
-.dept-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1);transform:translateY(-2px);}
-.dept-card h3{font-size:16px;margin-bottom:6px;}
-.dept-card .dept-meta{font-size:13px;color:#64748b;}
-.dept-card .dept-count{font-size:24px;font-weight:700;color:#7c3aed;margin-top:8px;}
+.dept-mark{width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--white);flex-shrink:0;letter-spacing:0.5px;}
+.dept-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.dept-row:last-child{border-bottom:none;}
+.dept-row:hover .dept-row-name{color:var(--coral);}
+.dept-row-name{font-weight:600;transition:color 0.2s;}
+.dept-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:22px;cursor:pointer;transition:all 0.2s;}
+.dept-card:hover{border-color:var(--coral);box-shadow:0 8px 24px rgba(15,23,42,0.06);transform:translateY(-2px);}
+.dept-card h3{font-size:17px;font-weight:700;margin:14px 0 2px;}
+.dept-card .dept-meta{font-size:12px;color:var(--gray);}
+.dept-card .dept-count{font-size:30px;font-weight:800;margin-top:14px;letter-spacing:-1px;}
 
-.artifact-card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #e2e8f0;transition:all 0.2s;}
-.artifact-card:hover{border-color:#c4b5fd;}
-.artifact-card h4{font-size:15px;margin-bottom:6px;}
-.artifact-card .artifact-desc{font-size:13px;color:#64748b;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.artifact-card .artifact-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#94a3b8;flex-wrap:wrap;gap:6px;}
-.artifact-card .artifact-link{display:inline-flex;align-items:center;gap:4px;color:#7c3aed;font-size:13px;font-weight:600;text-decoration:none;margin-bottom:8px;}
+.artifact-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all 0.2s;display:flex;flex-direction:column;}
+.artifact-card:hover{border-color:var(--coral);box-shadow:0 8px 24px rgba(15,23,42,0.06);}
+.artifact-card h4{font-size:16px;font-weight:700;margin-bottom:6px;line-height:1.35;}
+.artifact-card .artifact-desc{font-size:14px;color:var(--muted);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.artifact-card .artifact-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--gray);flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid var(--border);}
+.artifact-card .artifact-link{display:inline-flex;align-items:center;gap:6px;color:var(--coral);font-size:13px;font-weight:600;text-decoration:none;margin-bottom:12px;}
 .artifact-card .artifact-link:hover{text-decoration:underline;}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
-.badge-purple{background:#f3e8ff;color:#7c3aed;}
-.badge-green{background:#dcfce7;color:#16a34a;}
-.badge-blue{background:#dbeafe;color:#2563eb;}
-.badge-amber{background:#fef3c7;color:#d97706;}
-.badge-red{background:#fee2e2;color:#dc2626;}
-.badge-gray{background:#f1f5f9;color:#64748b;}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--bg);color:var(--muted);border:1px solid var(--border);}
+.badge-purple,.badge-green,.badge-blue,.badge-amber,.badge-red{background:var(--coral-light);color:#C2334A;border-color:#FBD5DA;}
+.badge-gray{background:var(--bg);color:var(--muted);}
 
-.search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.search-bar{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
 .search-bar .input{flex:1;min-width:200px;}
 
-.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;}
-.modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
-.modal h3{font-size:18px;margin-bottom:20px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--white);border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:20px;font-weight:700;margin-bottom:20px;}
 
 table{width:100%;border-collapse:collapse;font-size:14px;}
-th{text-align:left;padding:10px 14px;font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;}
-td{padding:12px 14px;border-bottom:1px solid #f1f5f9;}
-tr:hover td{background:#f8fafc;}
+th{text-align:left;padding:10px 12px;font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border);}
+td{padding:12px;border-bottom:1px solid var(--border);}
+tr:hover td{background:var(--bg);}
 
+.success-msg{background:#F0FDF4;color:#15803D;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:12px;}
+.error-msg{background:var(--coral-light);color:#B91C1C;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:12px;}
+.notice{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--coral);border-radius:14px;padding:18px 22px;margin-bottom:20px;font-size:14px;color:var(--muted);}
+.notice strong{color:var(--ink);}
+
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border:1px solid var(--border);border-radius:999px;font-weight:600;font-size:13px;background:var(--white);color:var(--muted);margin-bottom:18px;transition:all 0.2s;}
+.back-btn:hover{border-color:var(--ink);color:var(--ink);}
+
+@media(max-width:900px){
+  .auth-container{grid-template-columns:1fr;}
+  .auth-hero{padding:32px 24px;}
+  .auth-hero h1{font-size:32px;}
+  .auth-hero .fine{display:none;}
+}
 @media(max-width:768px){
   .grid-2,.grid-3{grid-template-columns:1fr;}
-  .header{padding:16px 20px;}
-  .content{padding:16px;}
-  .nav{margin:0 12px;}
+  .topbar-inner{padding:14px 16px;}
+  .nav{padding:0 16px;}
+  .content{padding:22px 16px 40px;}
+  .section-title{font-size:22px;}
+  .user-badge{display:none;}
 }
-
-.success-msg{background:#f0fdf4;color:#16a34a;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:12px;}
-.error-msg{background:#fef2f2;color:#ef4444;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:12px;}
-
-.back-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:8px;font-weight:600;font-size:14px;background:#f1f5f9;color:#64748b;margin-bottom:16px;transition:all 0.2s;}
-.back-btn:hover{background:#e2e8f0;}
 </style>
 </head>
 <body>
@@ -154,14 +190,26 @@ const BOOTSTRAP_USERS = {
 const DEFAULT_DEPARTMENTS = ["Finance", "HR", "Engineering", "Marketing", "Operations"];
 const ADMIN_ROLES = ["ceo", "founder", "admin"];
 
-const DEPT_COLORS = {
-  "Finance": "#7c3aed", "HR": "#10b981", "Engineering": "#2563eb", "Marketing": "#f59e0b",
-  "Operations": "#ef4444", "Sales": "#ec4899", "Legal": "#6366f1", "Product": "#14b8a6"
-};
-const DEPT_ICONS = {
-  "Finance": "💰", "HR": "👥", "Engineering": "⚙️", "Marketing": "📢",
-  "Operations": "🔧", "Sales": "📈", "Legal": "⚖️", "Product": "📦"
-};
+const LOGO_SVG = `<svg class="brand-logo" role="img" aria-label="Reach" viewBox="0 0 116 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M47.7734 33.5701C45.0726 36.2435 41.3666 37.5981 37.2769 37.3858C30.2245 37.0244 26.3729 31.3712 22.9751 26.3841C21.7335 24.5619 20.5278 22.7911 19.2109 21.4142C20.3549 20.9449 21.4098 20.2805 22.3466 19.4584C24.6466 17.4393 26.0852 14.6495 26.0852 11.2877C26.0852 8.51498 25.0662 5.75772 23.292 3.72488C21.8089 2.02599 19.0858 0 14.5372 0C9.98859 0 6.32365 1.60812 3.49104 4.6531C1.41196 6.88631 0.415231 9.28222 0.0298995 10.404C-0.0728556 10.702 0.098403 11.0256 0.403243 11.1095L2.65016 11.7329C2.92588 11.81 3.21531 11.6627 3.31293 11.3921C3.962 9.58535 6.74837 3.42517 14.5355 3.42517C17.1164 3.42517 19.252 4.30716 20.7094 5.97693C21.9476 7.39495 22.6583 9.33017 22.6583 11.2877C22.6583 13.6836 21.6564 15.5058 20.086 16.8844C18.6303 18.1603 16.0734 18.7562 13.9703 18.7562H10.9802V8.76844C10.9802 8.44305 10.7164 8.17931 10.391 8.17931H8.14413C7.81874 8.17931 7.555 8.44305 7.555 8.76844V33.1797C7.555 33.505 7.81874 33.7688 8.14413 33.7688H10.391C10.7164 33.7688 10.9802 33.505 10.9802 33.1797V22.1677H13.9601C15.9552 22.1677 17.8956 25.0158 20.1425 28.3125C23.7989 33.6797 28.3492 40.3588 37.1005 40.8058C37.4379 40.8229 37.7736 40.8315 38.1075 40.8315C42.8171 40.8315 47.0781 39.1155 50.2515 35.9335C50.4878 35.6954 50.481 35.3084 50.2344 35.0806L48.5886 33.5547C48.3574 33.3389 47.9977 33.3458 47.7734 33.5701Z" fill="#FF4661"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M114.94 26.4102L112.733 25.7491C112.452 25.6652 112.159 25.8125 112.046 26.0814C111.524 27.3367 110.789 27.4069 110.484 27.3966C109.347 27.3572 108.41 27.0695 108.446 23.3173V20.9933C108.446 18.2686 107.785 16.1244 106.482 14.6207C105.227 13.1736 103.447 12.4081 101.334 12.4081C99.4175 12.4081 97.7872 12.9869 96.5044 14.0984V4.12259C96.5044 3.79377 96.239 3.52832 95.9102 3.52832H93.6752C93.3464 3.52832 93.081 3.79548 93.081 4.12259V17.0937C92.634 20.3887 88.9588 27.3709 83.2182 27.3709C79.7964 27.3709 76.8731 24.8278 76.8731 21.4557C76.8731 18.0836 79.185 15.5284 82.0279 15.5284C83.4117 15.5284 84.3759 16.0319 85.4428 17.3523C85.6312 17.5852 85.972 17.628 86.2135 17.4499L88.0648 16.0901C88.3217 15.9018 88.3731 15.5353 88.1744 15.2852C86.4207 13.0897 84.5043 12.1032 82.0279 12.1032C77.481 12.1032 73.7527 15.9771 73.4667 20.8546C73.4633 20.822 73.4616 20.8272 73.4616 20.8974V20.9248C73.4547 21.0738 73.4496 21.2228 73.4496 21.3735C73.3177 23.8071 72.1891 27.0541 69.7384 27.0541C68.8804 27.0541 67.1901 26.6979 66.5821 24.1222C66.3742 23.2398 66.3752 22.0808 66.3764 20.5418L66.3766 20.1695V13.3158C66.3766 12.9869 66.1112 12.7215 65.7823 12.7215H63.5457C63.2169 12.7215 62.9514 12.9869 62.9514 13.3158V14.3536C61.2954 12.9167 59.2197 12.1032 57.1543 12.1032C52.8009 12.1032 49.1977 15.6551 48.6496 20.2397C47.5913 23.6615 43.553 28.3779 37.7319 28.3779C37.2215 28.3779 33.0514 28.2461 31.8115 24.3893C34.9832 24.9973 38.7783 24.7182 41.318 23.0501C43.1197 21.8667 44.113 20.0805 44.113 18.0185C44.113 15.1808 41.6332 12.1666 37.0383 12.1666C34.9438 12.1666 32.8099 12.9458 31.1864 14.3073C29.7324 15.525 28.001 17.7907 28.001 21.6715C28.001 28.6348 33.2107 31.8048 37.7319 31.8048C43.1111 31.8048 47.1306 29.0835 49.5761 25.8365C51.0199 28.7924 53.8747 30.8098 57.1543 30.8098C59.4475 30.8098 61.7526 29.8097 63.4841 28.0663C63.6742 27.8762 63.8523 27.6775 64.0218 27.4737C65.2583 29.5083 67.238 30.5975 69.7333 30.5975C72.4101 30.5975 74.2939 29.015 75.3763 27.0182C77.1762 29.3233 80.0533 30.7961 83.2199 30.7961C87.4603 30.7961 90.8067 28.4173 93.0827 25.4529V30.0306C93.0827 30.3594 93.3481 30.6249 93.677 30.6249H95.9119C96.2407 30.6249 96.5061 30.3577 96.5061 30.0306V24.91C96.5061 24.898 96.5096 24.8877 96.5096 24.8757C96.6209 16.8745 99.1367 15.8315 101.336 15.8315C103.783 15.8315 105.025 17.5681 105.025 20.9916V23.3155C105.025 25.2953 105.025 30.5512 110.363 30.8184H110.448C111.527 30.8201 114.072 30.4485 115.312 27.1483C115.427 26.8418 115.257 26.501 114.946 26.4085L114.94 26.4102ZM40.6845 18.0219C40.6845 18.9416 40.2872 19.6318 39.4361 20.1901C37.6224 21.382 34.1972 21.6047 31.4657 20.8032C31.8801 16.7084 35.2162 15.5935 37.035 15.5935C40.0149 15.5952 40.6845 17.3934 40.6845 18.0219ZM51.9967 21.4611C51.9967 24.7287 54.3087 27.3883 57.1516 27.3883C60.3284 27.3883 62.7414 24.5626 62.7414 21.4611C62.7414 18.3596 60.4123 15.5338 57.1516 15.5338C54.3087 15.5338 51.9967 18.1935 51.9967 21.4611Z" fill="#FF4661"/>
+</svg>`;
+const DEPT_PALETTE = ["#F05665", "#A0189D", "#0F172A", "#D9446F", "#7A1E8C", "#334155"];
+function deptColor(d){
+  let h = 0; for (const ch of String(d)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return DEPT_PALETTE[h % DEPT_PALETTE.length];
+}
+function deptInitials(d){
+  const w = String(d).trim().split(/\s+/);
+  return (w.length > 1 ? w[0][0] + w[1][0] : String(d).slice(0, 2)).toUpperCase();
+}
+function deptMark(d){ return `<span class="dept-mark" style="background:${deptColor(d)}">${esc(deptInitials(d))}</span>`; }
+function sectionHead(eyebrow, title, right){
+  return `<div class="section-head flex-row" style="justify-content:space-between;align-items:flex-end">
+    <div><div class="eyebrow">${eyebrow}</div><h2 class="section-title">${title}</h2><div class="rule"></div></div>
+    ${right || ""}
+  </div>`;
+}
 
 // Firestore collections (prefixed so they don't clash with the Grocery Tracker)
 const COL_ARTIFACTS = "ap_artifacts";
@@ -352,10 +400,19 @@ function renderAuth(){
   function draw(){
     document.getElementById("app").innerHTML = `
       <div class="auth-container">
+        <div class="auth-hero">
+          <div><span class="logo-chip">${LOGO_SVG}</span></div>
+          <div>
+            <div class="eyebrow">Artifact Portal</div>
+            <h1>Everything we've built, <span class="grad-text">in one place.</span></h1>
+            <p>Templates, trackers, decks and tools from every Reach team — organised by department, a click away.</p>
+          </div>
+          <div class="fine">For Reach team members only · @reachmobile.com &amp; @reachplatform.com</div>
+        </div>
+        <div class="auth-side">
         <div class="auth-card">
-          <div class="logo">📚</div>
-          <h1>Reach Artifact Portal</h1>
-          <p class="subtitle">Centralized knowledge & documents</p>
+          <h2>${mode==="login"?"Sign in":"Create your account"}</h2>
+          <p class="subtitle">${mode==="login"?"Use your Reach work email.":"Use your Reach work email. An admin will grant department access."}</p>
           <div class="auth-tabs">
             <button class="${mode==="login"?"active":""}" onclick="window._authMode='login';window._drawAuth()">Sign In</button>
             <button class="${mode==="signup"?"active":""}" onclick="window._authMode='signup';window._drawAuth()">Sign Up</button>
@@ -365,8 +422,9 @@ function renderAuth(){
           <div class="auth-field"><label>Password</label><input type="password" id="authPass" placeholder="${mode==="login"?"Enter password":"Create password (min 6 chars)"}"></div>
           ${mode==="login"
             ? `<button class="auth-btn" onclick="doLogin()">Sign In</button>
-               <p style="text-align:center;margin-top:14px;font-size:13px"><a href="#" style="color:#7c3aed" onclick="doReset();return false;">Forgot password?</a></p>`
-            : `<button class="auth-btn" onclick="doSignup()">Create Account</button>`}
+               <p style="text-align:center;margin-top:14px;font-size:13px"><a href="#" onclick="doReset();return false;">Forgot password?</a></p>`
+            : `<button class="auth-btn" onclick="doSignup()">Create account</button>`}
+        </div>
         </div>
       </div>
     `;
@@ -424,23 +482,25 @@ function renderApp(){
   const admin = isAdmin();
   if (currentTab === "admin" && !admin) currentTab = "dashboard";
   document.getElementById("app").innerHTML = `
-    <div class="header">
-      <div>
-        <h1>📚 Reach Artifact Portal</h1>
-        <p>Centralized knowledge & documents</p>
-      </div>
-      <div class="user-info">
-        <span class="role-badge">${esc(profile.role)}</span>
-        <span class="user-badge">${esc(profile.name || profile.email)}</span>
-        <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <span class="logo-chip">${LOGO_SVG}</span>
+          <div class="brand-name">Artifact Portal<span>Internal knowledge library</span></div>
+        </div>
+        <div class="user-info">
+          <span class="user-badge">${esc(profile.name || profile.email)}</span>
+          <span class="role-badge">${esc(profile.role)}</span>
+          <button class="logout-btn" onclick="doLogout()">Sign out</button>
+        </div>
       </div>
     </div>
-    <div class="nav" id="navBar">
+    <div class="nav-wrap"><div class="nav" id="navBar">
       <button class="${currentTab==="dashboard"?"active":""}" onclick="switchTab('dashboard')">Dashboard</button>
       <button class="${currentTab==="departments"?"active":""}" onclick="switchTab('departments')">Departments</button>
       <button class="${currentTab==="all"?"active":""}" onclick="switchTab('all')">All Artifacts</button>
       ${admin?`<button class="${currentTab==="admin"?"active":""}" onclick="switchTab('admin')">Admin</button>`:""}
-    </div>
+    </div></div>
     <div class="content" id="mainContent"></div>
   `;
   renderContent();
@@ -462,63 +522,56 @@ function renderContent(){
 }
 
 // =================== DASHBOARD ===================
+function fmtDate(iso){
+  if (!iso) return "";
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+function firstName(p){ return String((p && (p.name || p.email)) || "").split(/[\s@.]/)[0]; }
+
 function renderDashboard(){
   const depts = getAccessibleDepts();
   const visible = artifacts.filter(a => canAccessDept(a.department));
-  const recent = visible.slice().sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||"")).slice(0, 5);
+  const recent = visible.slice().sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||"")).slice(0, 6);
   const profile = getCurrentUserProfile();
   const pendingNote = (!isAdmin() && depts.length === 0)
-    ? `<div class="card" style="border-left:4px solid #f59e0b"><strong>Welcome!</strong> Your account is set up. An admin needs to give you access to a department before you'll see any artifacts.</div>`
+    ? `<div class="notice"><strong>You're in.</strong> An admin just needs to add you to a department — then its artifacts show up here.</div>`
     : "";
 
   return `
+    ${sectionHead("Dashboard", `Hi ${esc(firstName(profile))}, here's what the team has built.`)}
     ${pendingNote}
     <div class="grid grid-3" style="margin-bottom:20px">
-      <div class="stat" style="border-color:#7c3aed">
-        <div class="label">Departments</div>
-        <div class="value" style="color:#7c3aed">${depts.length}</div>
-      </div>
-      <div class="stat" style="border-color:#10b981">
-        <div class="label">Total Artifacts</div>
-        <div class="value" style="color:#10b981">${visible.length}</div>
-      </div>
-      <div class="stat" style="border-color:#f59e0b">
-        <div class="label">Team Members</div>
-        <div class="value" style="color:#f59e0b">${users.length}</div>
-      </div>
+      <div class="stat"><div class="label">Departments</div><div class="value">${depts.length}</div></div>
+      <div class="stat"><div class="label">Artifacts</div><div class="value">${visible.length}</div></div>
+      <div class="stat"><div class="label">Team members</div><div class="value">${users.length}</div></div>
     </div>
 
     <div class="grid grid-2">
       <div class="card">
-        <h3 style="font-size:16px;margin-bottom:16px">📁 Departments Overview</h3>
+        <div class="eyebrow">Browse</div>
+        <div class="card-title">Departments</div>
         ${depts.length > 0 ? depts.map(d => {
           const count = getDeptArtifacts(d).length;
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="openDept(${jsArg(d)})">
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:20px">${DEPT_ICONS[d]||"📂"}</span>
-              <span style="font-weight:600">${esc(d)}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:13px;color:#64748b">${count} artifact${count!==1?"s":""}</span>
-              <span style="color:#c4b5fd">›</span>
-            </div>
+          return `<div class="dept-row" onclick="openDept(${jsArg(d)})">
+            <div class="flex-row" style="gap:12px">${deptMark(d)}<span class="dept-row-name">${esc(d)}</span></div>
+            <span style="font-size:13px;color:var(--gray)">${count} artifact${count!==1?"s":""} &rsaquo;</span>
           </div>`;
-        }).join("") : '<p class="empty">No departments accessible</p>'}
+        }).join("") : '<p class="empty">No departments yet</p>'}
       </div>
 
       <div class="card">
-        <h3 style="font-size:16px;margin-bottom:16px">🕒 Recent Artifacts</h3>
+        <div class="eyebrow">Latest</div>
+        <div class="card-title">Recently added</div>
         ${recent.length > 0 ? recent.map(a => `
-          <div style="padding:10px 0;border-bottom:1px solid #f1f5f9">
-            <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
-              <div>
-                <div style="font-weight:600;font-size:14px">${esc(a.title)}</div>
-                <div style="font-size:12px;color:#94a3b8;margin-top:2px">${esc(a.owner)} • ${esc((a.createdAt||"").slice(0,10))}</div>
-              </div>
-              <span class="${badgeClass(a.department)}">${esc(a.department)}</span>
+          <div class="dept-row" style="cursor:default">
+            <div style="min-width:0">
+              <div style="font-weight:600;font-size:14px">${safeUrl(a.link) ? `<a href="${esc(safeUrl(a.link))}" target="_blank" rel="noopener noreferrer" style="color:var(--ink);text-decoration:none">${esc(a.title)}</a>` : esc(a.title)}</div>
+              <div style="font-size:12px;color:var(--gray)">${esc(a.owner)} · ${esc(fmtDate(a.createdAt))}</div>
             </div>
+            <span class="${badgeClass(a.department)}">${esc(a.department)}</span>
           </div>
-        `).join("") : '<p class="empty">No artifacts yet</p>'}
+        `).join("") : '<p class="empty">Nothing here yet. Be the first to add something useful.</p>'}
       </div>
     </div>
   `;
@@ -527,21 +580,19 @@ function renderDashboard(){
 // =================== DEPARTMENTS ===================
 function renderDepartments(){
   const depts = getAccessibleDepts();
-  if (!depts.length) return '<p class="empty">You don\'t have access to any departments yet. Ask an admin to add you.</p>';
+  if (!depts.length) return sectionHead("Departments", "Your departments") + '<p class="empty">You don\'t have access to any departments yet. Ask an admin to add you.</p>';
   return `
-    <h2 style="font-size:18px;margin-bottom:16px">🏢 Your Departments</h2>
+    ${sectionHead("Departments", "Pick a team, find the tool.")}
     <div class="grid grid-3">
       ${depts.map(d => {
         const count = getDeptArtifacts(d).length;
-        const color = DEPT_COLORS[d] || "#64748b";
-        const icon = DEPT_ICONS[d] || "📂";
         return `
-          <div class="dept-card" style="border-color:${color}" onclick="openDept(${jsArg(d)})">
-            <div style="font-size:28px;margin-bottom:8px">${icon}</div>
+          <div class="dept-card" onclick="openDept(${jsArg(d)})">
+            ${deptMark(d)}
             <h3>${esc(d)}</h3>
-            <div class="dept-meta">${canEditDept(d)?"You can add & edit":"View only"}</div>
-            <div class="dept-count" style="color:${color}">${count}</div>
-            <div style="font-size:12px;color:#94a3b8">artifact${count!==1?"s":""}</div>
+            <div class="dept-meta">${canEditDept(d)?"You can add &amp; edit":"View only"}</div>
+            <div class="dept-count">${count}</div>
+            <div style="font-size:11px;color:var(--gray);font-weight:700;letter-spacing:1.5px;text-transform:uppercase">artifact${count!==1?"s":""}</div>
           </div>
         `;
       }).join("")}
@@ -559,27 +610,18 @@ function renderDeptView(dept){
   if (!canAccessDept(dept)) { currentDept = null; return renderDepartments(); }
   const arts = getDeptArtifacts(dept);
   const canEdit = canEditDept(dept);
-  const color = DEPT_COLORS[dept] || "#64748b";
-  const icon = DEPT_ICONS[dept] || "📂";
 
   return `
-    <button class="back-btn" onclick="currentDept=null;renderApp()">← Back to Departments</button>
-    <div class="card" style="border-left:4px solid ${color}">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div>
-          <h2 style="font-size:20px">${icon} ${esc(dept)}</h2>
-          <p style="font-size:13px;color:#64748b;margin-top:4px">${arts.length} artifact${arts.length!==1?"s":""}</p>
-        </div>
-        ${canEdit?`<button class="btn" onclick="openAddArtifact(${jsArg(dept)})">+ Add Artifact</button>`:""}
-      </div>
-    </div>
+    <button class="back-btn" onclick="currentDept=null;renderApp()">&larr; All departments</button>
+    ${sectionHead(`Department · ${arts.length} artifact${arts.length!==1?"s":""}`, esc(dept),
+      canEdit ? `<button class="btn" onclick="openAddArtifact(${jsArg(dept)})">+ Add artifact</button>` : "")}
 
     <div class="search-bar">
-      <input class="input" placeholder="Search artifacts..." id="deptSearch" oninput="filterDeptArtifacts()">
+      <input class="input" placeholder="Search ${esc(dept)} artifacts…" id="deptSearch" oninput="filterDeptArtifacts()">
     </div>
 
     <div id="deptArtifactsList">
-      ${arts.length > 0 ? `<div class="grid grid-2">${arts.map(a => renderArtifactCard(a)).join("")}</div>` : `<p class="empty">No artifacts in this department yet.${canEdit?' Click "+ Add Artifact" to create one.':''}</p>`}
+      ${arts.length > 0 ? `<div class="grid grid-3">${arts.map(a => renderArtifactCard(a)).join("")}</div>` : `<p class="empty">No artifacts in ${esc(dept)} yet.${canEdit?' Add the first one.':''}</p>`}
     </div>
   `;
 }
@@ -591,15 +633,15 @@ function renderArtifactCard(a){
 
   return `
     <div class="artifact-card">
-      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
+      <div class="flex-row" style="justify-content:space-between;margin-bottom:10px">
         <span class="${badgeClass(a.department)}">${esc(a.department)}</span>
-        <span style="font-size:11px;color:#94a3b8">${esc((a.createdAt||"").slice(0,10))}</span>
+        <span style="font-size:12px;color:var(--gray)">${esc(fmtDate(a.createdAt))}</span>
       </div>
       <h4>${esc(a.title)}</h4>
-      <p class="artifact-desc">${esc(a.description) || "—"}</p>
-      ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="artifact-link">🔗 Open Artifact ↗</a>` : ""}
+      <p class="artifact-desc">${esc(a.description) || "No description yet."}</p>
+      ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="artifact-link">Open artifact &rarr;</a>` : ""}
       <div class="artifact-meta">
-        <span>👤 ${esc(a.owner)}</span>
+        <span>By ${esc(a.owner)}</span>
         ${showActions ? `
           <div class="flex-row">
             <button class="btn-sm edit" onclick="openEditArtifact(${jsArg(a.id)})">Edit</button>
@@ -610,7 +652,6 @@ function renderArtifactCard(a){
     </div>
   `;
 }
-
 function matchesQuery(a, q){
   return (a.title||"").toLowerCase().includes(q) || (a.description||"").toLowerCase().includes(q) || (a.owner||"").toLowerCase().includes(q);
 }
@@ -620,18 +661,18 @@ function filterDeptArtifacts(){
   let arts = getDeptArtifacts(currentDept);
   if (q) arts = arts.filter(a => matchesQuery(a, q));
   const el = document.getElementById("deptArtifactsList");
-  if (el) el.innerHTML = arts.length > 0 ? `<div class="grid grid-2">${arts.map(a => renderArtifactCard(a)).join("")}</div>` : '<p class="empty">No matching artifacts</p>';
+  if (el) el.innerHTML = arts.length > 0 ? `<div class="grid grid-3">${arts.map(a => renderArtifactCard(a)).join("")}</div>` : '<p class="empty">No matching artifacts</p>';
 }
 
 // =================== ALL ARTIFACTS ===================
 function renderAllArtifacts(){
   const arts = artifacts.filter(a => canAccessDept(a.department)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
   return `
-    <h2 style="font-size:18px;margin-bottom:16px">📋 All Artifacts</h2>
+    ${sectionHead("Library", "All artifacts")}
     <div class="search-bar">
-      <input class="input" placeholder="Search by title, owner, description..." id="allSearch" oninput="filterAllArtifacts()">
-      <select class="input" style="width:200px" id="allDeptFilter" onchange="filterAllArtifacts()">
-        <option value="">All Departments</option>
+      <input class="input" placeholder="Search by title, owner or description…" id="allSearch" oninput="filterAllArtifacts()">
+      <select class="input" style="width:220px" id="allDeptFilter" onchange="filterAllArtifacts()">
+        <option value="">All departments</option>
         ${getAccessibleDepts().map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join("")}
       </select>
     </div>
@@ -640,10 +681,9 @@ function renderAllArtifacts(){
     </div>
   `;
 }
-
 function renderArtifactList(arts){
   if (arts.length === 0) return '<p class="empty">No artifacts found</p>';
-  return `<div class="grid grid-2">${arts.map(a => renderArtifactCard(a)).join("")}</div>`;
+  return `<div class="grid grid-3">${arts.map(a => renderArtifactCard(a)).join("")}</div>`;
 }
 
 function filterAllArtifacts(){
@@ -664,7 +704,7 @@ function modalError(msg){
     el.id = "modalError";
     el.className = "error-msg";
     const body = document.getElementById("modalBody");
-    body.insertBefore(el, body.children[1] || null);
+    const h = body.querySelector('h3'); body.insertBefore(el, h ? h.nextSibling : body.firstChild);
   }
   el.textContent = msg;
 }
@@ -682,12 +722,12 @@ function closeModal(){
 function openAddArtifact(dept){
   const profile = getCurrentUserProfile();
   openModal(`
-    <h3>Add Artifact to ${esc(dept)}</h3>
+    <div class="eyebrow">New artifact</div><h3>Add to ${esc(dept)}</h3>
     <div class="field"><label>Title *</label><input class="input" id="artTitle" placeholder="e.g. Q4 Budget Report"></div>
     <div class="field"><label>Description</label><textarea class="input" id="artDesc" placeholder="Brief description of this artifact..."></textarea></div>
     <div class="field"><label>Link (URL)</label><input class="input" id="artLink" placeholder="https://claude.ai/... or https://docs.google.com/..."></div>
     <div class="field"><label>Owner</label><input class="input" id="artOwner" value="${esc(profile.name || currentUser.email)}"></div>
-    <button class="btn" id="artSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="addArtifact(${jsArg(dept)})">Add Artifact</button>
+    <button class="btn" id="artSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="addArtifact(${jsArg(dept)})">Add artifact</button>
   `);
 }
 
@@ -717,7 +757,7 @@ function openEditArtifact(id){
   if (!a) return;
   const deptOptions = isAdmin() ? getDepartments() : getDepartments().filter(d => canEditDept(d));
   openModal(`
-    <h3>Edit Artifact</h3>
+    <div class="eyebrow">Artifact</div><h3>Edit details</h3>
     <div class="field"><label>Title *</label><input class="input" id="editTitle" value="${esc(a.title)}"></div>
     <div class="field"><label>Description</label><textarea class="input" id="editDesc">${esc(a.description)}</textarea></div>
     <div class="field"><label>Link (URL)</label><input class="input" id="editLink" value="${esc(a.link)}"></div>
@@ -725,7 +765,7 @@ function openEditArtifact(id){
     <div class="field"><label>Department</label>
       <select class="input" id="editDept">${deptOptions.map(d=>`<option value="${esc(d)}" ${d===a.department?"selected":""}>${esc(d)}</option>`).join("")}</select>
     </div>
-    <button class="btn" id="editSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="saveEditArtifact(${jsArg(id)})">Save Changes</button>
+    <button class="btn" id="editSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="saveEditArtifact(${jsArg(id)})">Save changes</button>
   `);
 }
 
@@ -761,21 +801,22 @@ function renderAdmin(){
   const depts = getDepartments();
   const sorted = users.slice().sort((a,b) => (a.name||a.email).localeCompare(b.name||b.email));
   return `
-    <h2 style="font-size:18px;margin-bottom:16px">⚙️ Admin Panel</h2>
-    <div class="grid grid-2">
+    ${sectionHead("Admin", "People &amp; access")}
+    <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)">
       <div class="card" style="overflow-x:auto">
-        <h3 style="font-size:16px;margin-bottom:6px">👥 Team Members & Access</h3>
-        <p style="font-size:12px;color:#94a3b8;margin-bottom:14px">People appear here after they sign up. Viewers can only read; Members can add to their departments.</p>
+        <div class="eyebrow">Team</div>
+        <div class="card-title" style="margin-bottom:4px">Members</div>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:14px">People appear here after they sign up. Viewers can read; Members can also add to their departments.</p>
         <table>
           <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Departments</th><th></th></tr></thead>
           <tbody>
             ${sorted.map(u => `
               <tr>
                 <td style="font-weight:600">${esc(u.name)}</td>
-                <td style="font-size:12px;color:#64748b">${esc(u.email)}</td>
-                <td><span class="badge badge-${ADMIN_ROLES.includes(u.role)?'purple':u.role==='member'?'blue':'gray'}">${esc(u.role)}</span></td>
-                <td style="font-size:12px">${(u.departments||[]).includes("*")?"All":esc((u.departments||[]).join(", "))||"None"}</td>
-                <td><button class="btn-sm edit" onclick="openEditUser(${jsArg(u.email)})">Edit</button></td>
+                <td style="font-size:13px;color:var(--gray)">${esc(u.email)}</td>
+                <td><span class="badge ${ADMIN_ROLES.includes(u.role)?'badge-purple':''}">${esc(u.role)}</span></td>
+                <td style="font-size:13px">${(u.departments||[]).includes("*")?"All":esc((u.departments||[]).join(", "))||"None"}</td>
+                <td style="text-align:right"><button class="btn-sm edit" onclick="openEditUser(${jsArg(u.email)})">Edit</button></td>
               </tr>
             `).join("")}
           </tbody>
@@ -783,26 +824,25 @@ function renderAdmin(){
       </div>
 
       <div class="card">
-        <h3 style="font-size:16px;margin-bottom:16px">🏢 Departments</h3>
+        <div class="eyebrow">Structure</div>
+        <div class="card-title">Departments</div>
         ${depts.map(d => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:18px">${DEPT_ICONS[d]||"📂"}</span>
-              <span style="font-weight:600">${esc(d)}</span>
-              <span style="font-size:12px;color:#94a3b8">(${getDeptArtifacts(d).length} artifacts)</span>
+          <div class="dept-row" style="cursor:default">
+            <div class="flex-row" style="gap:12px">
+              ${deptMark(d)}
+              <div><div style="font-weight:600">${esc(d)}</div><div style="font-size:12px;color:var(--gray)">${getDeptArtifacts(d).length} artifact${getDeptArtifacts(d).length!==1?"s":""}</div></div>
             </div>
             <button class="btn-sm red" onclick="removeDept(${jsArg(d)})">Remove</button>
           </div>
         `).join("")}
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <input class="input" id="newDeptName" placeholder="New department name" style="flex:1">
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <input class="input" id="newDeptName" placeholder="New department" style="flex:1">
           <button class="btn" onclick="addDept()">Add</button>
         </div>
       </div>
     </div>
   `;
 }
-
 function toggleAllDepts(cb){
   document.querySelectorAll('.deptCb').forEach(c => { c.checked = cb.checked; c.disabled = cb.checked; });
 }
@@ -814,7 +854,7 @@ function openEditUser(email){
   const hasAll = (u.departments||[]).includes("*");
   const roles = [["viewer","Viewer (read only)"],["member","Member (can add artifacts)"],["admin","Admin (full access)"],["founder","Founder (full access)"],["ceo","CEO (full access)"]];
   openModal(`
-    <h3>Edit Member: ${esc(u.name)}</h3>
+    <div class="eyebrow">Member</div><h3>${esc(u.name)}</h3>
     <div class="field"><label>Name</label><input class="input" id="editUserName" value="${esc(u.name)}"></div>
     <div class="field"><label>Email</label><input class="input" value="${esc(u.email)}" disabled style="background:#f1f5f9"></div>
     <div class="field"><label>Role</label>
@@ -828,7 +868,7 @@ function openEditUser(email){
         ${depts.map(d => `<label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="${esc(d)}" class="deptCb" ${hasAll||(u.departments||[]).includes(d)?"checked":""} ${hasAll?"disabled":""}> ${esc(d)}</label>`).join("")}
       </div>
     </div>
-    <button class="btn" id="userSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="saveEditUser(${jsArg(email)})">Save Changes</button>
+    <button class="btn" id="userSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="saveEditUser(${jsArg(email)})">Save changes</button>
   `);
 }
 
