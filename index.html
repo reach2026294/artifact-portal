@@ -228,6 +228,11 @@ let unsubs = [];
 let artifactUnsubs = [];
 let artifactsByDept = {};
 let artifactsKey = "";
+let restrictedDepts = ["Finance"];
+const VIS_ROLES = ["viewer", "member", "admin"];
+const VIS_LABELS = { viewer: "Viewers", member: "Members", admin: "Admins" };
+const SUPER_ROLES = ["ceo", "founder"];
+const migrated = new Set();
 let renderTimer = null;
 
 // =================== HELPERS ===================
@@ -256,25 +261,40 @@ function isAdmin(){
   const p = getCurrentUserProfile();
   return !!p && ADMIN_ROLES.includes(p.role);
 }
-function hasAllDepts(){
+function isSuper(){
   const p = getCurrentUserProfile();
-  return isAdmin() || (!!p && (p.departments || []).includes("*"));
+  return !!p && (!!BOOTSTRAP_USERS[myEmail()] || SUPER_ROLES.includes(p.role));
+}
+function roleKey(){
+  const p = getCurrentUserProfile();
+  return p && VIS_ROLES.includes(p.role) ? p.role : "viewer";
+}
+function isRestricted(dept){ return restrictedDepts.includes(dept); }
+function hasDeptGrant(dept){
+  const p = getCurrentUserProfile();
+  return !!p && ((p.departments || []).includes("*") || (p.departments || []).includes(dept));
+}
+function hasAllDepts(){ return isSuper(); }
+function visibleToOf(a){ return Array.isArray(a.visibleTo) ? a.visibleTo : VIS_ROLES; }
+function canSeeArtifact(a){
+  if (isSuper() || a.ownerEmail === myEmail()) return true;
+  return canAccessDept(a.department) && visibleToOf(a).includes(roleKey());
 }
 function canAccessDept(dept){
   const p = getCurrentUserProfile();
   if (!p) return false;
-  return hasAllDepts() || (p.departments || []).includes(dept);
+  return isAdmin() || !isRestricted(dept) || hasDeptGrant(dept);
 }
 function canEditDept(dept){
   const p = getCurrentUserProfile();
   if (!p) return false;
   if (isAdmin()) return true;
-  return p.role === "member" && canAccessDept(dept);
+  return p.role === "member" && hasDeptGrant(dept);
 }
 function getDepartments(){ return departments; }
 function getAccessibleDepts(){ return getDepartments().filter(d => canAccessDept(d)); }
 function getDeptArtifacts(dept){
-  return artifacts.filter(a => a.department === dept).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+  return artifacts.filter(a => a.department === dept && canSeeArtifact(a)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
 }
 function showError(msg){
   console.error(msg);
@@ -352,17 +372,21 @@ function startListeners(){
   unsubs.push(db.collection(COL_CONFIG).doc("main").onSnapshot(snap => {
     const d = snap.exists ? snap.data() : null;
     departments = (d && Array.isArray(d.departments)) ? d.departments : DEFAULT_DEPARTMENTS.slice();
+    restrictedDepts = (d && Array.isArray(d.restricted)) ? d.restricted : ["Finance"];
+    if (isAdmin() && (!d || !Array.isArray(d.restricted))) {
+      db.collection(COL_CONFIG).doc("main").set({ restricted: restrictedDepts, departments }, { merge: true }).catch(() => {});
+    }
     syncArtifactListeners();
     scheduleRender();
   }, e => showError("Departments: " + e.message)));
 }
 
-// Admins / "All departments" users read the whole collection.
-// Everyone else gets one listener per department they can see, so the
-// security rules can verify each query.
+// CEO / founders read the whole collection. Everyone else gets one listener
+// per visible department (filtered to artifacts their role may see) plus one
+// for their own artifacts, so the security rules can verify every query.
 function syncArtifactListeners(){
   if (!users.length) return;
-  const key = hasAllDepts() ? "*" : getAccessibleDepts().slice().sort().join("|");
+  const key = isSuper() ? "*" : roleKey() + "#" + getAccessibleDepts().slice().sort().join("|");
   if (key === artifactsKey) return;
   artifactsKey = key;
   artifactUnsubs.forEach(u => u());
@@ -371,19 +395,37 @@ function syncArtifactListeners(){
   artifacts = [];
 
   const onErr = e => showError("Artifacts: " + e.message);
+  const merge = () => {
+    const byId = {};
+    Object.values(artifactsByDept).flat().forEach(a => { byId[a.id] = a; });
+    artifacts = Object.values(byId);
+    scheduleRender();
+  };
   if (key === "*") {
     artifactUnsubs.push(db.collection(COL_ARTIFACTS).onSnapshot(snap => {
       artifacts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // One-time upgrade: older artifacts get the default "everyone" visibility
+      artifacts.filter(a => !Array.isArray(a.visibleTo) && !migrated.has(a.id)).forEach(a => {
+        migrated.add(a.id);
+        db.collection(COL_ARTIFACTS).doc(a.id).update({ visibleTo: VIS_ROLES.slice() }).catch(() => {});
+      });
       scheduleRender();
     }, onErr));
   } else {
+    const role = roleKey();
     getAccessibleDepts().forEach(dept => {
-      artifactUnsubs.push(db.collection(COL_ARTIFACTS).where("department", "==", dept).onSnapshot(snap => {
-        artifactsByDept[dept] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        artifacts = Object.values(artifactsByDept).flat();
-        scheduleRender();
-      }, onErr));
+      artifactUnsubs.push(db.collection(COL_ARTIFACTS)
+        .where("department", "==", dept)
+        .where("visibleTo", "array-contains", role)
+        .onSnapshot(snap => {
+          artifactsByDept["d:" + dept] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          merge();
+        }, onErr));
     });
+    artifactUnsubs.push(db.collection(COL_ARTIFACTS).where("ownerEmail", "==", myEmail()).onSnapshot(snap => {
+      artifactsByDept["own"] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      merge();
+    }, onErr));
   }
   scheduleRender();
 }
@@ -412,7 +454,7 @@ function renderAuth(){
         <div class="auth-side">
         <div class="auth-card">
           <h2>${mode==="login"?"Sign in":"Create your account"}</h2>
-          <p class="subtitle">${mode==="login"?"Use your Reach work email.":"Use your Reach work email. An admin will grant department access."}</p>
+          <p class="subtitle">${mode==="login"?"Use your Reach work email.":"Use your Reach work email. You'll see every open department straight away."}</p>
           <div class="auth-tabs">
             <button class="${mode==="login"?"active":""}" onclick="window._authMode='login';window._drawAuth()">Sign In</button>
             <button class="${mode==="signup"?"active":""}" onclick="window._authMode='signup';window._drawAuth()">Sign Up</button>
@@ -531,11 +573,11 @@ function firstName(p){ return String((p && (p.name || p.email)) || "").split(/[\
 
 function renderDashboard(){
   const depts = getAccessibleDepts();
-  const visible = artifacts.filter(a => canAccessDept(a.department));
+  const visible = artifacts.filter(a => canSeeArtifact(a) && getDepartments().includes(a.department));
   const recent = visible.slice().sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||"")).slice(0, 6);
   const profile = getCurrentUserProfile();
   const pendingNote = (!isAdmin() && depts.length === 0)
-    ? `<div class="notice"><strong>You're in.</strong> An admin just needs to add you to a department — then its artifacts show up here.</div>`
+    ? `<div class="notice"><strong>You're in.</strong> There's nothing you can view yet — ask an admin for department access.</div>`
     : "";
 
   return `
@@ -590,7 +632,7 @@ function renderDepartments(){
           <div class="dept-card" onclick="openDept(${jsArg(d)})">
             ${deptMark(d)}
             <h3>${esc(d)}</h3>
-            <div class="dept-meta">${canEditDept(d)?"You can add &amp; edit":"View only"}</div>
+            <div class="dept-meta">${isRestricted(d)?"Restricted · ":""}${canEditDept(d)?"You can add &amp; edit":"View only"}</div>
             <div class="dept-count">${count}</div>
             <div style="font-size:11px;color:var(--gray);font-weight:700;letter-spacing:1.5px;text-transform:uppercase">artifact${count!==1?"s":""}</div>
           </div>
@@ -634,7 +676,7 @@ function renderArtifactCard(a){
   return `
     <div class="artifact-card">
       <div class="flex-row" style="justify-content:space-between;margin-bottom:10px">
-        <span class="${badgeClass(a.department)}">${esc(a.department)}</span>
+        <span class="flex-row" style="gap:6px"><span class="${badgeClass(a.department)}">${esc(a.department)}</span>${visibilityNote(a)}</span>
         <span style="font-size:12px;color:var(--gray)">${esc(fmtDate(a.createdAt))}</span>
       </div>
       <h4>${esc(a.title)}</h4>
@@ -666,7 +708,7 @@ function filterDeptArtifacts(){
 
 // =================== ALL ARTIFACTS ===================
 function renderAllArtifacts(){
-  const arts = artifacts.filter(a => canAccessDept(a.department)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+  const arts = artifacts.filter(a => canSeeArtifact(a) && getDepartments().includes(a.department)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
   return `
     ${sectionHead("Library", "All artifacts")}
     <div class="search-bar">
@@ -689,7 +731,7 @@ function renderArtifactList(arts){
 function filterAllArtifacts(){
   const q = (document.getElementById("allSearch")?.value || "").toLowerCase();
   const dept = document.getElementById("allDeptFilter")?.value || "";
-  let arts = artifacts.filter(a => canAccessDept(a.department)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+  let arts = artifacts.filter(a => canSeeArtifact(a) && getDepartments().includes(a.department)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
   if (dept) arts = arts.filter(a => a.department === dept);
   if (q) arts = arts.filter(a => matchesQuery(a, q));
   const el = document.getElementById("allArtifactsList");
@@ -719,6 +761,22 @@ function closeModal(){
   scheduleRender();
 }
 
+function visibilityField(current){
+  const cur = current || VIS_ROLES;
+  return `<div class="field"><label>Who can see this</label>
+    <div class="flex-row" style="gap:16px;margin-top:2px">
+      ${VIS_ROLES.map(r => `<label style="font-size:14px;display:flex;align-items:center;gap:6px;font-weight:500;color:var(--ink)"><input type="checkbox" class="visCb" value="${r}" ${cur.includes(r)?"checked":""}> ${VIS_LABELS[r]}</label>`).join("")}
+    </div>
+    <div style="font-size:12px;color:var(--gray);margin-top:6px">The CEO, founders and the person who added it can always see it.</div>
+  </div>`;
+}
+function readVisibility(){ return [...document.querySelectorAll('.visCb:checked')].map(c => c.value); }
+function visibilityNote(a){
+  const v = visibleToOf(a);
+  if (VIS_ROLES.every(r => v.includes(r))) return "";
+  return `<span class="badge" title="Visible to: ${esc(v.map(r => VIS_LABELS[r]).join(", ") || "CEO & founders only")}">Limited</span>`;
+}
+
 function openAddArtifact(dept){
   const profile = getCurrentUserProfile();
   openModal(`
@@ -727,6 +785,7 @@ function openAddArtifact(dept){
     <div class="field"><label>Description</label><textarea class="input" id="artDesc" placeholder="Brief description of this artifact..."></textarea></div>
     <div class="field"><label>Link (URL)</label><input class="input" id="artLink" placeholder="https://claude.ai/... or https://docs.google.com/..."></div>
     <div class="field"><label>Owner</label><input class="input" id="artOwner" value="${esc(profile.name || currentUser.email)}"></div>
+    ${visibilityField()}
     <button class="btn" id="artSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="addArtifact(${jsArg(dept)})">Add artifact</button>
   `);
 }
@@ -746,6 +805,7 @@ async function addArtifact(dept){
       owner: owner || myEmail(),
       ownerEmail: myEmail(),
       department: dept,
+      visibleTo: readVisibility(),
       createdAt: now, updatedAt: now
     });
     closeModal();
@@ -765,6 +825,7 @@ function openEditArtifact(id){
     <div class="field"><label>Department</label>
       <select class="input" id="editDept">${deptOptions.map(d=>`<option value="${esc(d)}" ${d===a.department?"selected":""}>${esc(d)}</option>`).join("")}</select>
     </div>
+    ${visibilityField(visibleToOf(a))}
     <button class="btn" id="editSaveBtn" style="width:100%;justify-content:center;margin-top:8px" onclick="saveEditArtifact(${jsArg(id)})">Save changes</button>
   `);
 }
@@ -782,6 +843,7 @@ async function saveEditArtifact(id){
       link,
       owner: document.getElementById("editOwner").value.trim(),
       department: document.getElementById("editDept").value,
+      visibleTo: readVisibility(),
       updatedAt: new Date().toISOString()
     });
     closeModal();
@@ -806,7 +868,7 @@ function renderAdmin(){
       <div class="card" style="overflow-x:auto">
         <div class="eyebrow">Team</div>
         <div class="card-title" style="margin-bottom:4px">Members</div>
-        <p style="font-size:13px;color:var(--gray);margin-bottom:14px">People appear here after they sign up. Viewers can read; Members can also add to their departments.</p>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:14px">People appear here after they sign up. Everyone can view open departments. Department access lets Members add artifacts there and unlocks restricted departments (like Finance).</p>
         <table>
           <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Departments</th><th></th></tr></thead>
           <tbody>
@@ -827,12 +889,15 @@ function renderAdmin(){
         <div class="eyebrow">Structure</div>
         <div class="card-title">Departments</div>
         ${depts.map(d => `
-          <div class="dept-row" style="cursor:default">
-            <div class="flex-row" style="gap:12px">
+          <div class="dept-row" style="cursor:default;gap:10px">
+            <div class="flex-row" style="gap:12px;flex-wrap:nowrap;min-width:0;flex:1">
               ${deptMark(d)}
-              <div><div style="font-weight:600">${esc(d)}</div><div style="font-size:12px;color:var(--gray)">${getDeptArtifacts(d).length} artifact${getDeptArtifacts(d).length!==1?"s":""}</div></div>
+              <div><div style="font-weight:600">${esc(d)}</div><div style="font-size:12px;color:var(--gray)">${isRestricted(d)?"Restricted · ":"Open to all · "}${getDeptArtifacts(d).length} artifact${getDeptArtifacts(d).length!==1?"s":""}</div></div>
             </div>
-            <button class="btn-sm red" onclick="removeDept(${jsArg(d)})">Remove</button>
+            <div class="flex-row" style="gap:6px;flex-wrap:nowrap;flex-shrink:0">
+              <button class="btn-sm edit" onclick="toggleRestricted(${jsArg(d)})" title="${isRestricted(d)?"Let everyone view this department":"Only people given access can view"}">${isRestricted(d)?"Open":"Restrict"}</button>
+              <button class="btn-sm red" onclick="removeDept(${jsArg(d)})">Remove</button>
+            </div>
           </div>
         `).join("")}
         <div style="display:flex;gap:8px;margin-top:16px">
@@ -862,7 +927,7 @@ function openEditUser(email){
         ${roles.map(([v,l]) => `<option value="${v}" ${u.role===v?"selected":""}>${l}</option>`).join("")}
       </select>
     </div>
-    <div class="field"><label>Department Access</label>
+    <div class="field"><label>Department access</label><div style="font-size:12px;color:var(--gray);margin-bottom:6px">Lets Members add artifacts there, and unlocks restricted departments.</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
         <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="allDeptsCb" ${hasAll?"checked":""} onchange="toggleAllDepts(this)"> All</label>
         ${depts.map(d => `<label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="${esc(d)}" class="deptCb" ${hasAll||(u.departments||[]).includes(d)?"checked":""} ${hasAll?"disabled":""}> ${esc(d)}</label>`).join("")}
@@ -892,8 +957,14 @@ async function saveEditUser(email){
   } catch (e) { btn.disabled = false; modalError("Could not save: " + e.message); }
 }
 
+async function toggleRestricted(d){
+  const next = isRestricted(d) ? restrictedDepts.filter(x => x !== d) : restrictedDepts.concat([d]);
+  try { await db.collection(COL_CONFIG).doc("main").set({ restricted: next }, { merge: true }); }
+  catch (e) { showError("Could not update department: " + e.message); }
+}
+
 async function saveDepartmentsList(list){
-  try { await db.collection(COL_CONFIG).doc("main").set({ departments: list }, { merge: true }); }
+  try { await db.collection(COL_CONFIG).doc("main").set({ departments: list, restricted: restrictedDepts.filter(d => list.includes(d)) }, { merge: true }); }
   catch (e) { showError("Could not update departments: " + e.message); }
 }
 
