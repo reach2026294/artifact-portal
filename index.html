@@ -296,12 +296,12 @@ function getAccessibleDepts(){ return getDepartments().filter(d => canAccessDept
 function getDeptArtifacts(dept){
   return artifacts.filter(a => a.department === dept && canSeeArtifact(a)).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
 }
-function showError(msg){
-  console.error(msg);
+function showError(msg, ok){
+  if (!ok) console.error(msg);
   const c = document.getElementById("mainContent");
   if (c) {
     const div = document.createElement("div");
-    div.className = "error-msg";
+    div.className = ok ? "success-msg" : "error-msg";
     div.textContent = msg;
     c.prepend(div);
     setTimeout(() => div.remove(), 6000);
@@ -332,6 +332,7 @@ function initFirebase(config){
         return;
       }
       currentUser = user;
+      if (!user.emailVerified) { renderVerify(); return; }
       document.getElementById("app").innerHTML = '<div class="auth-loading"><div class="auth-spinner"></div><p>Loading your library...</p></div>';
       try {
         await ensureOwnProfile();
@@ -359,6 +360,60 @@ async function ensureOwnProfile(){
       departments: boot ? ["*"] : [],
       createdAt: new Date().toISOString()
     });
+  } else if (snap.data().status === "invited") {
+    await ref.update({ status: "active", lastLoginAt: new Date().toISOString() }).catch(() => {});
+  }
+}
+
+function portalUrl(){ return location.origin + location.pathname; }
+
+function renderVerify(){
+  const email = myEmail();
+  document.getElementById("app").innerHTML = `
+    <div class="auth-container">
+      <div class="auth-hero">
+        <div><span class="logo-chip">${LOGO_SVG}</span></div>
+        <div>
+          <div class="eyebrow">One quick step</div>
+          <h1>Confirm it's <span class="grad-text">really you.</span></h1>
+          <p>We only let verified Reach email addresses in. It takes one click.</p>
+        </div>
+        <div class="fine">For Reach team members only · @reachmobile.com &amp; @reachplatform.com</div>
+      </div>
+      <div class="auth-side">
+        <div class="auth-card">
+          <h2>Check your inbox</h2>
+          <p class="subtitle">We've sent a verification link to <strong>${esc(email)}</strong>. Click it, then come back here. (Check Junk if it's not there.)</p>
+          <div class="auth-error" id="authError"></div>
+          <button class="auth-btn" onclick="checkVerified()">I've verified — continue</button>
+          <p style="text-align:center;margin-top:14px;font-size:13px">
+            <a href="#" onclick="sendVerify(true);return false;">Resend email</a> &nbsp;·&nbsp;
+            <a href="#" onclick="doLogout();return false;">Sign out</a>
+          </p>
+        </div>
+      </div>
+    </div>`;
+  if (!window._verifySent) sendVerify(false);
+}
+
+function sendVerify(manual){
+  const u = firebase.auth().currentUser;
+  if (!u) return;
+  window._verifySent = true;
+  u.sendEmailVerification({ url: portalUrl() })
+    .then(() => { if (manual) showAuthError("Sent again to " + u.email + ".", true); })
+    .catch(e => showAuthError(e.code === "auth/too-many-requests" ? "Please wait a minute before asking for another email." : e.message));
+}
+
+async function checkVerified(){
+  const u = firebase.auth().currentUser;
+  if (!u) return;
+  await u.reload();
+  if (firebase.auth().currentUser.emailVerified) {
+    await firebase.auth().currentUser.getIdToken(true);
+    location.reload();
+  } else {
+    showAuthError("Not verified yet — click the link in the email first.");
   }
 }
 
@@ -504,7 +559,10 @@ function doSignup(){
   const { email, pass } = readAuthFields();
   if (!email || !pass) { showAuthError("Please enter email and password."); return; }
   if (!isAllowedEmail(email)) { showAuthError("Please use your " + DOMAINS_LABEL + " email."); return; }
-  firebase.auth().createUserWithEmailAndPassword(email, pass).catch(e => showAuthError(e.message));
+  window._verifySent = true;
+  firebase.auth().createUserWithEmailAndPassword(email, pass)
+    .then(cred => cred.user.sendEmailVerification({ url: portalUrl() }))
+    .catch(e => { window._verifySent = false; showAuthError(e.message); });
 }
 
 function doReset(){
@@ -866,19 +924,21 @@ function renderAdmin(){
     ${sectionHead("Admin", "People &amp; access")}
     <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)">
       <div class="card" style="overflow-x:auto">
-        <div class="eyebrow">Team</div>
-        <div class="card-title" style="margin-bottom:4px">Members</div>
+        <div class="flex-row" style="justify-content:space-between;align-items:flex-start">
+          <div><div class="eyebrow">Team</div><div class="card-title" style="margin-bottom:4px">Members</div></div>
+          <button class="btn" onclick="openInvite()">+ Invite people</button>
+        </div>
         <p style="font-size:13px;color:var(--gray);margin-bottom:14px">People appear here after they sign up. Everyone can view open departments. Department access lets Members add artifacts there and unlocks restricted departments (like Finance).</p>
         <table>
           <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Departments</th><th></th></tr></thead>
           <tbody>
             ${sorted.map(u => `
               <tr>
-                <td style="font-weight:600">${esc(u.name)}</td>
+                <td style="font-weight:600">${esc(u.name)}${u.status==="invited"?' <span class="badge" style="margin-left:4px">Invited</span>':''}</td>
                 <td style="font-size:13px;color:var(--gray)">${esc(u.email)}</td>
                 <td><span class="badge ${ADMIN_ROLES.includes(u.role)?'badge-purple':''}">${esc(u.role)}</span></td>
                 <td style="font-size:13px">${(u.departments||[]).includes("*")?"All":esc((u.departments||[]).join(", "))||"None"}</td>
-                <td style="text-align:right"><button class="btn-sm edit" onclick="openEditUser(${jsArg(u.email)})">Edit</button></td>
+                <td style="text-align:right;white-space:nowrap">${u.status==="invited"?`<button class="btn-sm" onclick="resendInvite(${jsArg(u.email)})">Resend</button> `:""}<button class="btn-sm edit" onclick="openEditUser(${jsArg(u.email)})">Edit</button></td>
               </tr>
             `).join("")}
           </tbody>
@@ -908,6 +968,95 @@ function renderAdmin(){
     </div>
   `;
 }
+// =================== INVITES ===================
+function inviteAuth(){
+  if (!window._inviteApp) window._inviteApp = firebase.initializeApp(FIREBASE_CONFIG, "invite");
+  return window._inviteApp.auth();
+}
+function randomPassword(){
+  const a = new Uint8Array(24); crypto.getRandomValues(a);
+  return Array.from(a, b => b.toString(36)).join("") + "Aa1!";
+}
+
+function openInvite(){
+  const depts = getDepartments();
+  openModal(`
+    <div class="eyebrow">Admin</div><h3>Invite people</h3>
+    <div class="field"><label>Work emails</label>
+      <textarea class="input" id="invEmails" placeholder="one per line, or separated by commas&#10;name@reachmobile.com"></textarea>
+      <div style="font-size:12px;color:var(--gray);margin-top:6px">Only ${esc(DOMAINS_LABEL)} addresses. Each person gets an email from Firebase to set their password.</div>
+    </div>
+    <div class="field"><label>Role</label>
+      <select class="input" id="invRole">
+        <option value="viewer">Viewer (read only)</option>
+        <option value="member">Member (can add artifacts)</option>
+        <option value="admin">Admin (full access)</option>
+      </select>
+    </div>
+    <div class="field"><label>Department access</label><div style="font-size:12px;color:var(--gray);margin-bottom:6px">Lets Members add artifacts there, and unlocks restricted departments. Optional for Viewers.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="allDeptsCb" onchange="toggleAllDepts(this)"> All</label>
+        ${depts.map(d => `<label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="${esc(d)}" class="deptCb"> ${esc(d)}</label>`).join("")}
+      </div>
+    </div>
+    <div id="invResult"></div>
+    <button class="btn" id="invBtn" style="width:100%;margin-top:8px" onclick="sendInvites()">Send invites</button>
+  `);
+}
+
+async function inviteOne(email, role, depts){
+  const ref = db.collection(COL_USERS).doc(email);
+  const snap = await ref.get();
+  if (snap.exists) {
+    await ref.update({ role, departments: depts });
+    return snap.data().status === "invited" ? "already invited — access updated" : "already on the portal — access updated";
+  }
+  await ref.set({
+    email, name: email.split("@")[0], role, departments: depts,
+    status: "invited", invitedBy: myEmail(), invitedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString()
+  });
+  const auth2 = inviteAuth();
+  let existingAccount = false;
+  try {
+    await auth2.createUserWithEmailAndPassword(email, randomPassword());
+  } catch (e) {
+    if (e.code === "auth/email-already-in-use") existingAccount = true; else throw e;
+  } finally {
+    await auth2.signOut().catch(() => {});
+  }
+  await firebase.auth().sendPasswordResetEmail(email, { url: portalUrl() });
+  return existingAccount ? "invite sent (they already had a login)" : "invite sent";
+}
+
+async function sendInvites(){
+  const raw = document.getElementById("invEmails").value;
+  const emails = [...new Set(raw.split(/[\s,;]+/).map(x => x.trim().toLowerCase()).filter(Boolean))];
+  if (!emails.length) { modalError("Add at least one email."); return; }
+  const bad = emails.filter(e => !isAllowedEmail(e) || !/^[^@\s]+@[^@\s]+$/.test(e));
+  if (bad.length) { modalError("Not a Reach work email: " + bad.join(", ")); return; }
+  const role = document.getElementById("invRole").value;
+  let depts = [];
+  if (document.getElementById("allDeptsCb").checked) depts = ["*"];
+  else document.querySelectorAll('.deptCb:checked').forEach(c => depts.push(c.value));
+  const btn = document.getElementById("invBtn"); btn.disabled = true; btn.textContent = "Sending…";
+  const lines = [];
+  for (const e of emails) {
+    try { lines.push(`<div>✓ ${esc(e)} — ${esc(await inviteOne(e, role, depts))}</div>`); }
+    catch (err) { lines.push(`<div style="color:#B91C1C">✕ ${esc(e)} — ${esc(err.message)}</div>`); }
+  }
+  document.getElementById("invResult").innerHTML = `<div class="success-msg" style="line-height:1.8">${lines.join("")}</div>`;
+  btn.disabled = false; btn.textContent = "Done";
+  btn.onclick = closeModal;
+}
+
+async function resendInvite(email){
+  try {
+    await firebase.auth().sendPasswordResetEmail(email, { url: portalUrl() });
+    showError("Invite re-sent to " + email + ".", true);
+  } catch (e) { showError("Could not resend: " + e.message); }
+}
+
 function toggleAllDepts(cb){
   document.querySelectorAll('.deptCb').forEach(c => { c.checked = cb.checked; c.disabled = cb.checked; });
 }
