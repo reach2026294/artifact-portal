@@ -276,20 +276,22 @@ function hasDeptGrant(dept){
 }
 function hasAllDepts(){ return isSuper(); }
 function visibleToOf(a){ return Array.isArray(a.visibleTo) ? a.visibleTo : VIS_ROLES; }
+// Access is by department grant only: nobody sees or edits a department
+// unless it's ticked in their profile. CEO/founders see everything.
 function canSeeArtifact(a){
-  if (isSuper() || a.ownerEmail === myEmail()) return true;
-  return canAccessDept(a.department) && visibleToOf(a).includes(roleKey());
+  if (isSuper()) return true;
+  return canAccessDept(a.department) && (a.ownerEmail === myEmail() || visibleToOf(a).includes(roleKey()));
 }
 function canAccessDept(dept){
   const p = getCurrentUserProfile();
   if (!p) return false;
-  return isAdmin() || !isRestricted(dept) || hasDeptGrant(dept);
+  return isSuper() || hasDeptGrant(dept);
 }
 function canEditDept(dept){
   const p = getCurrentUserProfile();
   if (!p) return false;
-  if (isAdmin()) return true;
-  return p.role === "member" && hasDeptGrant(dept);
+  if (isSuper()) return true;
+  return (p.role === "member" || p.role === "admin") && hasDeptGrant(dept);
 }
 function getDepartments(){ return departments; }
 function getAccessibleDepts(){ return getDepartments().filter(d => canAccessDept(d)); }
@@ -434,10 +436,6 @@ function startListeners(){
   unsubs.push(db.collection(COL_CONFIG).doc("main").onSnapshot(snap => {
     const d = snap.exists ? snap.data() : null;
     departments = (d && Array.isArray(d.departments)) ? d.departments : DEFAULT_DEPARTMENTS.slice();
-    restrictedDepts = (d && Array.isArray(d.restricted)) ? d.restricted : ["Finance"];
-    if (isAdmin() && (!d || !Array.isArray(d.restricted))) {
-      db.collection(COL_CONFIG).doc("main").set({ restricted: restrictedDepts, departments }, { merge: true }).catch(() => {});
-    }
     syncArtifactListeners();
     scheduleRender();
   }, e => showError("Departments: " + e.message)));
@@ -484,10 +482,15 @@ function syncArtifactListeners(){
           merge();
         }, onErr));
     });
-    artifactUnsubs.push(db.collection(COL_ARTIFACTS).where("ownerEmail", "==", myEmail()).onSnapshot(snap => {
-      artifactsByDept["own"] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      merge();
-    }, onErr));
+    getAccessibleDepts().forEach(dept => {
+      artifactUnsubs.push(db.collection(COL_ARTIFACTS)
+        .where("department", "==", dept)
+        .where("ownerEmail", "==", myEmail())
+        .onSnapshot(snap => {
+          artifactsByDept["o:" + dept] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          merge();
+        }, onErr));
+    });
   }
   scheduleRender();
 }
@@ -516,7 +519,7 @@ function renderAuth(){
         <div class="auth-side">
         <div class="auth-card">
           <h2>${mode==="login"?"Sign in":"Create your account"}</h2>
-          <p class="subtitle">${mode==="login"?"Use your Reach work email.":"Use your Reach work email. You'll see every open department straight away."}</p>
+          <p class="subtitle">${mode==="login"?"Use your Reach work email.":"Use your Reach work email. An admin will give you access to your departments."}</p>
           <div class="auth-tabs">
             <button class="${mode==="login"?"active":""}" onclick="window._authMode='login';window._drawAuth()">Sign In</button>
             <button class="${mode==="signup"?"active":""}" onclick="window._authMode='signup';window._drawAuth()">Sign Up</button>
@@ -668,7 +671,7 @@ function renderDashboard(){
   const visible = artifacts.filter(a => canSeeArtifact(a) && getDepartments().includes(a.department));
   const recent = visible.slice().sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||"")).slice(0, 6);
   const profile = getCurrentUserProfile();
-  const pendingNote = (!isAdmin() && depts.length === 0)
+  const pendingNote = (!isSuper() && depts.length === 0)
     ? `<div class="notice"><strong>You're in.</strong> There's nothing you can view yet — ask an admin for department access.</div>`
     : "";
 
@@ -724,7 +727,7 @@ function renderDepartments(){
           <div class="dept-card" onclick="openDept(${jsArg(d)})">
             ${deptMark(d)}
             <h3>${esc(d)}</h3>
-            <div class="dept-meta">${isRestricted(d)?"Restricted · ":""}${canEditDept(d)?"You can add &amp; edit":"View only"}</div>
+            <div class="dept-meta">${canEditDept(d)?"You can add &amp; edit":"View only"}</div>
             <div class="dept-count">${count}</div>
             <div style="font-size:11px;color:var(--gray);font-weight:700;letter-spacing:1.5px;text-transform:uppercase">artifact${count!==1?"s":""}</div>
           </div>
@@ -762,7 +765,7 @@ function renderDeptView(dept){
 
 function renderArtifactCard(a){
   const isOwner = a.ownerEmail === myEmail();
-  const showActions = isAdmin() || (isOwner && canEditDept(a.department));
+  const showActions = isSuper() || (canEditDept(a.department) && (isAdmin() || isOwner));
   const link = safeUrl(a.link);
 
   return `
@@ -907,7 +910,7 @@ async function addArtifact(dept){
 function openEditArtifact(id){
   const a = artifacts.find(x => x.id === id);
   if (!a) return;
-  const deptOptions = isAdmin() ? getDepartments() : getDepartments().filter(d => canEditDept(d));
+  const deptOptions = getDepartments().filter(d => canEditDept(d));
   openModal(`
     <div class="eyebrow">Artifact</div><h3>Edit details</h3>
     <div class="field"><label>Title *</label><input class="input" id="editTitle" value="${esc(a.title)}"></div>
@@ -963,7 +966,7 @@ function renderAdmin(){
           <div><div class="eyebrow">Team</div><div class="card-title" style="margin-bottom:4px">Members</div></div>
           <button class="btn" onclick="openInvite()">+ Invite people</button>
         </div>
-        <p style="font-size:13px;color:var(--gray);margin-bottom:14px">People appear here after they sign up. Everyone can view open departments. Department access lets Members add artifacts there and unlocks restricted departments (like Finance).</p>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:14px">People see only the departments ticked in their access. Viewers can read there; Members and Admins can also add and edit. Admins manage people and departments here.</p>
         <table>
           <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Departments</th><th></th></tr></thead>
           <tbody>
@@ -996,10 +999,9 @@ function renderAdmin(){
           <div class="dept-row" style="cursor:default;gap:10px">
             <div class="flex-row" style="gap:12px;flex-wrap:nowrap;min-width:0;flex:1">
               ${deptMark(d)}
-              <div><div style="font-weight:600">${esc(d)}</div><div style="font-size:12px;color:var(--gray)">${isRestricted(d)?"Restricted · ":"Open to all · "}${getDeptArtifacts(d).length} artifact${getDeptArtifacts(d).length!==1?"s":""}</div></div>
+              <div><div style="font-weight:600">${esc(d)}</div><div style="font-size:12px;color:var(--gray)">${getDeptArtifacts(d).length} artifact${getDeptArtifacts(d).length!==1?"s":""}</div></div>
             </div>
             <div class="flex-row" style="gap:6px;flex-wrap:nowrap;flex-shrink:0">
-              <button class="btn-sm edit" onclick="toggleRestricted(${jsArg(d)})" title="${isRestricted(d)?"Let everyone view this department":"Only people given access can view"}">${isRestricted(d)?"Open":"Restrict"}</button>
               <button class="btn-sm red" onclick="removeDept(${jsArg(d)})">Remove</button>
             </div>
           </div>
@@ -1062,7 +1064,7 @@ function openInvite(){
         <option value="admin">Admin (full access)</option>
       </select>
     </div>
-    <div class="field"><label>Department access</label><div style="font-size:12px;color:var(--gray);margin-bottom:6px">Lets Members add artifacts there, and unlocks restricted departments. Optional for Viewers.</div>
+    <div class="field"><label>Department access</label><div style="font-size:12px;color:var(--gray);margin-bottom:6px">They'll only see the departments you tick. Members and Admins can also add and edit there.</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
         <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="allDeptsCb" onchange="toggleAllDepts(this)"> All</label>
         ${depts.map(d => `<label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="${esc(d)}" class="deptCb"> ${esc(d)}</label>`).join("")}
@@ -1149,7 +1151,7 @@ function openEditUser(email){
         ${roles.map(([v,l]) => `<option value="${v}" ${u.role===v?"selected":""}>${l}</option>`).join("")}
       </select>
     </div>
-    <div class="field"><label>Department access</label><div style="font-size:12px;color:var(--gray);margin-bottom:6px">Lets Members add artifacts there, and unlocks restricted departments.</div>
+    <div class="field"><label>Department access</label><div style="font-size:12px;color:var(--gray);margin-bottom:6px">They only see the departments ticked here. Members and Admins can also add and edit there.</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
         <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="allDeptsCb" ${hasAll?"checked":""} onchange="toggleAllDepts(this)"> All</label>
         ${depts.map(d => `<label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="${esc(d)}" class="deptCb" ${hasAll||(u.departments||[]).includes(d)?"checked":""} ${hasAll?"disabled":""}> ${esc(d)}</label>`).join("")}
@@ -1186,7 +1188,7 @@ async function toggleRestricted(d){
 }
 
 async function saveDepartmentsList(list){
-  try { await db.collection(COL_CONFIG).doc("main").set({ departments: list, restricted: restrictedDepts.filter(d => list.includes(d)) }, { merge: true }); }
+  try { await db.collection(COL_CONFIG).doc("main").set({ departments: list }, { merge: true }); }
   catch (e) { showError("Could not update departments: " + e.message); }
 }
 
