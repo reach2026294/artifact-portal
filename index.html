@@ -338,6 +338,7 @@ function initFirebase(config){
         await ensureOwnProfile();
         startListeners();
       } catch (e) {
+        if (e.removed) { renderRemoved(); return; }
         document.getElementById("app").innerHTML = '<div class="auth-loading"><p class="error-msg">Could not load the portal: ' + esc(e.message) + '</p><button class="btn" onclick="doLogout()">Sign Out</button></div>';
       }
     } else {
@@ -360,6 +361,8 @@ async function ensureOwnProfile(){
       departments: boot ? ["*"] : [],
       createdAt: new Date().toISOString()
     });
+  } else if (snap.data().status === "removed") {
+    throw Object.assign(new Error("removed"), { removed: true });
   } else if (snap.data().status === "invited") {
     await ref.update({ status: "active", lastLoginAt: new Date().toISOString() }).catch(() => {});
   }
@@ -422,7 +425,11 @@ function startListeners(){
     users = snap.docs.map(d => ({ email: d.id, ...d.data() }));
     syncArtifactListeners();
     scheduleRender();
-  }, e => showError("Team list: " + e.message)));
+  }, e => {
+    db.collection(COL_USERS).doc(myEmail()).get()
+      .then(d => { if (d.exists && d.data().status === "removed") renderRemoved(); else showError("Team list: " + e.message); })
+      .catch(() => showError("Team list: " + e.message));
+  }));
 
   unsubs.push(db.collection(COL_CONFIG).doc("main").onSnapshot(snap => {
     const d = snap.exists ? snap.data() : null;
@@ -576,8 +583,35 @@ function doReset(){
 function doLogout(){ firebase.auth().signOut(); }
 
 // =================== RENDER ===================
+function isRemoved(u){ return !!u && u.status === "removed"; }
+function activeUsers(){ return users.filter(u => !isRemoved(u)); }
+
+function renderRemoved(){
+  stopListeners();
+  document.getElementById("app").innerHTML = `
+    <div class="auth-container">
+      <div class="auth-hero">
+        <div><span class="logo-chip">${LOGO_SVG}</span></div>
+        <div>
+          <div class="eyebrow">Artifact Portal</div>
+          <h1>Your access has been <span class="grad-text">removed.</span></h1>
+          <p>If you think this is a mistake, reach out to the People Success team.</p>
+        </div>
+        <div class="fine">For Reach team members only · @reachmobile.com &amp; @reachplatform.com</div>
+      </div>
+      <div class="auth-side">
+        <div class="auth-card">
+          <h2>No access</h2>
+          <p class="subtitle">${esc(myEmail())} no longer has access to the Artifact Portal.</p>
+          <button class="auth-btn" onclick="doLogout()">Sign out</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderApp(){
   if (!currentUser) return;
+  if (isRemoved(users.find(u => u.email === myEmail()))) { renderRemoved(); return; }
   const profile = getCurrentUserProfile();
   const admin = isAdmin();
   if (currentTab === "admin" && !admin) currentTab = "dashboard";
@@ -644,7 +678,7 @@ function renderDashboard(){
     <div class="grid grid-3" style="margin-bottom:20px">
       <div class="stat"><div class="label">Departments</div><div class="value">${depts.length}</div></div>
       <div class="stat"><div class="label">Artifacts</div><div class="value">${visible.length}</div></div>
-      <div class="stat"><div class="label">Team members</div><div class="value">${users.length}</div></div>
+      <div class="stat"><div class="label">Team members</div><div class="value">${activeUsers().length}</div></div>
     </div>
 
     <div class="grid grid-2">
@@ -919,7 +953,8 @@ async function deleteArtifact(id){
 function renderAdmin(){
   if (!isAdmin()) return '<p class="empty">Access denied</p>';
   const depts = getDepartments();
-  const sorted = users.slice().sort((a,b) => (a.name||a.email).localeCompare(b.name||b.email));
+  const sorted = activeUsers().sort((a,b) => (a.name||a.email).localeCompare(b.name||b.email));
+  const removed = users.filter(isRemoved).sort((a,b) => (a.name||a.email).localeCompare(b.name||b.email));
   return `
     ${sectionHead("Admin", "People &amp; access")}
     <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)">
@@ -938,11 +973,20 @@ function renderAdmin(){
                 <td style="font-size:13px;color:var(--gray)">${esc(u.email)}</td>
                 <td><span class="badge ${ADMIN_ROLES.includes(u.role)?'badge-purple':''}">${esc(u.role)}</span></td>
                 <td style="font-size:13px">${(u.departments||[]).includes("*")?"All":esc((u.departments||[]).join(", "))||"None"}</td>
-                <td style="text-align:right;white-space:nowrap">${u.status==="invited"?`<button class="btn-sm" onclick="resendInvite(${jsArg(u.email)})">Resend</button> `:""}<button class="btn-sm edit" onclick="openEditUser(${jsArg(u.email)})">Edit</button></td>
+                <td style="text-align:right;white-space:nowrap">${u.status==="invited"?`<button class="btn-sm" onclick="resendInvite(${jsArg(u.email)})">Resend</button> `:""}<button class="btn-sm edit" onclick="openEditUser(${jsArg(u.email)})">Edit</button>${canRemoveUser(u)?` <button class="btn-sm red" onclick="removeUser(${jsArg(u.email)})">Remove</button>`:""}</td>
               </tr>
             `).join("")}
           </tbody>
         </table>
+        ${removed.length ? `
+          <details style="margin-top:16px">
+            <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)">Removed (${removed.length})</summary>
+            ${removed.map(u => `
+              <div class="dept-row" style="cursor:default">
+                <div><div style="font-weight:600">${esc(u.name)}</div><div style="font-size:12px;color:var(--gray)">${esc(u.email)}${u.removedAt?` · removed ${esc(fmtDate(u.removedAt))}`:""}</div></div>
+                <button class="btn-sm edit" onclick="restoreUser(${jsArg(u.email)})">Restore</button>
+              </div>`).join("")}
+          </details>` : ""}
       </div>
 
       <div class="card">
@@ -968,6 +1012,31 @@ function renderAdmin(){
     </div>
   `;
 }
+// =================== REMOVE / RESTORE ===================
+function canRemoveUser(u){
+  return isAdmin() && u.email !== myEmail() && !BOOTSTRAP_USERS[u.email];
+}
+
+async function removeUser(email){
+  const u = users.find(x => x.email === email);
+  if (!u || !canRemoveUser(u)) return;
+  if (!confirm(`Remove ${u.name || email} from the Artifact Portal?\n\nThey'll lose access straight away. Artifacts they added stay in the library. You can restore them later.`)) return;
+  try {
+    await db.collection(COL_USERS).doc(email).update({
+      status: "removed", role: "viewer", departments: [],
+      removedBy: myEmail(), removedAt: new Date().toISOString()
+    });
+    showError(`${u.name || email} removed.`, true);
+  } catch (e) { showError("Could not remove: " + e.message); }
+}
+
+async function restoreUser(email){
+  try {
+    await db.collection(COL_USERS).doc(email).update({ status: "active", role: "viewer", departments: [] });
+    showError(`${email} restored as a Viewer. Edit them to change role or departments.`, true);
+  } catch (e) { showError("Could not restore: " + e.message); }
+}
+
 // =================== INVITES ===================
 function inviteAuth(){
   if (!window._inviteApp) window._inviteApp = firebase.initializeApp(FIREBASE_CONFIG, "invite");
@@ -1008,6 +1077,10 @@ async function inviteOne(email, role, depts){
   const ref = db.collection(COL_USERS).doc(email);
   const snap = await ref.get();
   if (snap.exists) {
+    if (snap.data().status === "removed") {
+      await ref.update({ role, departments: depts, status: "active" });
+      return "access restored (they can sign in with their old password)";
+    }
     await ref.update({ role, departments: depts });
     return snap.data().status === "invited" ? "already invited — access updated" : "already on the portal — access updated";
   }
